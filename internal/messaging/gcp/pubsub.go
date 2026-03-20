@@ -40,7 +40,6 @@ func NewClient(ctx context.Context, projectID string, opts ...Option) (Client, e
 	}
 	c.client = pubsubClient
 	return c, nil
-
 }
 
 func (c Client) Connect(ctx context.Context, topic string) error {
@@ -55,6 +54,7 @@ func (c Client) Connect(ctx context.Context, topic string) error {
 	}
 	return nil
 }
+
 func (c Client) Publish(ctx context.Context, topic string, message messaging.Message) error {
 	publisher := c.client.Publisher(topic)
 
