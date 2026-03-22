@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"cloud.google.com/go/pubsub/v2"
@@ -58,10 +59,14 @@ func (c Client) Connect(ctx context.Context, topic string) error {
 func (c Client) Publish(ctx context.Context, topic string, message messaging.Message) error {
 	publisher := c.client.Publisher(topic)
 
+	var attrs map[string]string
+	if err := json.Unmarshal([]byte(message.Attributes), &attrs); err != nil {
+		return fmt.Errorf("failed to unmarshal attributes: %w", err)
+	}
 	result := publisher.Publish(ctx, &pubsub.Message{
 		ID:          message.ID,
 		Data:        message.Data,
-		Attributes:  message.Attributes,
+		Attributes:  attrs,
 		OrderingKey: message.OrderingKey,
 	})
 	<-result.Ready()

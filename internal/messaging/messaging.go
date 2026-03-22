@@ -6,7 +6,7 @@ import "context"
 type Message struct {
 	ID          string
 	Data        []byte
-	Attributes  map[string]string
+	Attributes  string
 	OrderingKey string
 }
 

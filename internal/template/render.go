@@ -24,8 +24,8 @@ func NewTemplate() Template {
 		timestampGen: func() time.Time { return time.Now().UTC() },
 	}
 }
-func (t Template) Render(queue config.QueueConfig) (config.QueueConfig, error) {
 
+func (t Template) Render(queue config.QueueConfig) (config.QueueConfig, error) {
 	// replace all templating values.
 	queue.Payload = strings.ReplaceAll(queue.Payload, "{{uuid}}", t.uuidGen())
 	queue.Payload = strings.ReplaceAll(queue.Payload, "{{timestamp}}", t.timestampGen().Format(time.RFC3339))
