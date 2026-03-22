@@ -2,17 +2,19 @@ package engine
 
 import (
 	"context"
-	"sync/atomic"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/nawafswe/qstorm/internal/config"
 	"github.com/nawafswe/qstorm/internal/messaging"
+	"github.com/nawafswe/qstorm/internal/metric"
 )
 
+//go:generate go tool mockgen -source=${GOFILE} -destination=mock/${GOFILE} -package=mock
 type (
 	templateRenderer interface {
-		Render(payload string) (string, error)
+		Render(queue config.QueueConfig) (config.QueueConfig, error)
 	}
 
 	messenger interface {
@@ -20,24 +22,23 @@ type (
 		Close() error
 		Connect(ctx context.Context, topic string) error
 	}
+	metricAggregator interface {
+		Record(executionTime time.Duration, encounteredErr error)
+		Summary() metric.Summary
+	}
 )
-
-// Result holds the aggregate outcome of a full load test run across all stages.
-type Result struct {
-	ErrorCounter      int64
-	PublishedMessages int64
-}
 
 // Engine orchestrates stage execution, publishing messages at a controlled rate.
 type Engine struct {
 	templateRenderer templateRenderer
 	messenger        messenger
+	metricAggregator metricAggregator
 	uuidGen          func() string
 	timeStampGen     func() time.Time
 }
 
 // NewEngine creates and return a new Engine.
-func NewEngine(templateRenderer templateRenderer, messenger messenger) Engine {
+func NewEngine(templateRenderer templateRenderer, messenger messenger, metricAggregator metricAggregator) Engine {
 	return Engine{
 		templateRenderer: templateRenderer,
 		messenger:        messenger,
@@ -45,42 +46,43 @@ func NewEngine(templateRenderer templateRenderer, messenger messenger) Engine {
 		timeStampGen: func() time.Time {
 			return time.Now().UTC()
 		},
+		metricAggregator: metricAggregator,
 	}
 }
 
 // Run executes all stages sequentially, accumulating publish results.
-func (e Engine) Run(ctx context.Context, request config.Config) (Result, error) {
-	var errCounter atomic.Int64
-	var publishedCounter atomic.Int64
+func (e Engine) Run(ctx context.Context, request config.Config) (metric.Summary, error) {
 	var err error
 	for _, stage := range request.Stages {
-		if err = e.runStage(ctx, request.Queue, stage, &errCounter, &publishedCounter); err != nil {
+		if err = e.runStage(ctx, request.Queue, stage); err != nil {
 			break
 		}
 	}
 
-	return Result{
-		ErrorCounter:      errCounter.Load(),
-		PublishedMessages: publishedCounter.Load(),
-	}, err
+	return e.metricAggregator.Summary(), err
 }
 
 // runStage publishes messages at the configured rate for the stage's duration.
 // Each publish runs in its own goroutine so slow publishes don't block the ticker.
 // Returns early with ctx.Err() if the context is cancelled.
-func (e Engine) runStage(ctx context.Context, queue config.QueueConfig, stage config.StageConfig, errCounter, publishedMessagesCounter *atomic.Int64) error {
+func (e Engine) runStage(ctx context.Context, queue config.QueueConfig, stage config.StageConfig) error {
 	publishFunc := func(gCtx context.Context) {
-		err := e.messenger.Publish(ctx, queue.Topic, messaging.Message{
-			ID:          uuid.NewString(),
-			Data:        []byte(queue.Payload),
-			Attributes:  queue.Attributes,
-			OrderingKey: queue.OrderingKey,
-		})
+		templatedQueue, err := e.templateRenderer.Render(queue)
 		if err != nil {
-			errCounter.Add(1)
-		} else {
-			publishedMessagesCounter.Add(1)
+			e.metricAggregator.Record(0, err)
+			return
 		}
+		fmt.Println("queue", templatedQueue.Payload)
+
+		start := e.timeStampGen()
+		err = e.messenger.Publish(gCtx, templatedQueue.Topic, messaging.Message{
+			ID:          e.uuidGen(),
+			Data:        []byte(templatedQueue.Payload),
+			Attributes:  templatedQueue.Attributes,
+			OrderingKey: templatedQueue.OrderingKey,
+		})
+		end := time.Since(start)
+		e.metricAggregator.Record(end, err)
 	}
 	//  create ticker based on given rate.
 	// For example rate=100: 1s / 100 = 10ms per tick — one publish every 10ms = 100 msg/s
