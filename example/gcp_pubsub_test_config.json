@@ -7,12 +7,11 @@
   },
   "STAGES": [
     {
-      "DURATION": "60s",
+      "DURATION": "30s",
       "RATE": 10
     },
     {
       "DURATION": "10s",
-      "START_AT_DURATION": "30s",
       "RATE": 30
     }
   ]

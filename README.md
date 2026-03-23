@@ -72,7 +72,7 @@ QStorm is a **client-side tool** — it runs from your machine or CI pipeline an
        success_rate...: 99.92%
        error_rate.....: 0.08%
 
-       pub_latency....: avg=2.1ms  p50=1.9ms  p75=2.4ms  p90=3.2ms  p99=8.1ms
+       publish_latency....: avg=2.1ms  p50=1.9ms  p75=2.4ms  p90=3.2ms  p99=8.1ms
 
        duration.......: 2m30.012s
 
