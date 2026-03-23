@@ -219,16 +219,13 @@ QStorm is built around a few core components:
 
 ## Queue Support
 
-| | Queue | Status | Notes |
-|---|---|---|---|
-| <img src="https://cdn.simpleicons.org/googlecloud" width="16"> | **Google Cloud PubSub** | [x] Supported | Full support including emulator |
-| <img src="https://cdn.simpleicons.org/apachekafka" width="16"> | **Apache Kafka** | [ ] Planned | Next priority |
-| <img src="https://cdn.simpleicons.org/rabbitmq" width="16"> | **RabbitMQ** | [ ] Planned | AMQP 0-9-1 |
-| <img src="https://cdn.simpleicons.org/amazonsqs" width="16"> | **Amazon SQS** | [ ] Planned | Standard and FIFO queues |
-| <img src="https://cdn.simpleicons.org/microsoftazure" width="16"> | **Azure Service Bus** | [ ] Planned | Topics and queues |
-| <img src="https://cdn.simpleicons.org/nats.io" width="16"> | **NATS JetStream** | [ ] Planned | Streaming support |
-| <img src="https://cdn.simpleicons.org/apache" width="16"> | **Apache ActiveMQ** | [ ] Planned | OpenWire / AMQP |
-| <img src="https://cdn.simpleicons.org/redis" width="16"> | **Redis Streams** | [ ] Planned | Lightweight option |
+| | Queue | Status |
+|---|---|---|
+| <img src="https://cdn.simpleicons.org/googlecloud" width="16"> | Google Cloud PubSub | ✅ |
+| <img src="https://cdn.simpleicons.org/apachekafka" width="16"> | Apache Kafka | Planned |
+| <img src="https://cdn.simpleicons.org/rabbitmq" width="16"> | RabbitMQ | Planned |
+| <img src="https://cdn.simpleicons.org/apachepulsar" width="16"> | Apache Pulsar | Planned |
+| <img src="https://cdn.simpleicons.org/apache" width="16"> | Apache ActiveMQ | Planned |
 
 Adding a new queue requires implementing a single interface:
 
