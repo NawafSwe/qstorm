@@ -20,7 +20,8 @@ const (
 	dim    = "\033[2m"
 	reset  = "\033[0m"
 
-	metricWidth = 22
+	labelWidth = 18
+	lineWidth  = 68
 )
 
 // Printer handles formatted terminal output styled after k6.
@@ -45,11 +46,6 @@ func (p Printer) Banner() {
 
 // Config prints the pre-run configuration summary.
 func (p Printer) Config(cfg config.Config) {
-	fmt.Printf("  %sexecution%s: local\n", bold, reset)
-	fmt.Printf("  %squeue%s:     %s\n", bold, reset, cfg.Queue.Type)
-	fmt.Printf("  %stopic%s:     %s\n", bold, reset, cfg.Queue.Topic)
-	fmt.Println()
-
 	totalDuration := time.Duration(0)
 	totalMessages := 0
 	for _, s := range cfg.Stages {
@@ -57,21 +53,27 @@ func (p Printer) Config(cfg config.Config) {
 		totalMessages += s.Rate * int(s.Duration.Seconds())
 	}
 
-	fmt.Printf("  %sstages%s:    %d configured, ~%s total duration\n", bold, reset, len(cfg.Stages), totalDuration)
+	fmt.Printf("  %sexecution%s: local\n", bold, reset)
+	fmt.Printf("  %squeue%s:     %s\n", bold, reset, cfg.Queue.Type)
+	fmt.Printf("  %stopic%s:     %s\n", bold, reset, cfg.Queue.Topic)
+	fmt.Printf("  %sstages%s:    %d configured, ~%s total\n", bold, reset, len(cfg.Stages), totalDuration)
 	fmt.Printf("  %sexpected%s:  ~%d messages\n", bold, reset, totalMessages)
 	fmt.Println()
 
 	for i, s := range cfg.Stages {
 		fmt.Printf("    %s→%s stage %d: %s @ %d msg/s\n", dim, reset, i+1, s.Duration, s.Rate)
 	}
+
+	fmt.Println()
+	p.separator()
 	fmt.Println()
 }
 
 // Progress prints a live progress line that overwrites itself.
 func (p Printer) Progress(elapsed time.Duration, currentStage, totalStages int, rate int, published, errors int64) {
-	fmt.Printf("\r  %srunning%s (%s), stage %d/%d, %d msg/s, %s%d%s published, %s%d%s failed",
-		cyan, reset,
-		elapsed.Truncate(time.Millisecond),
+	bar := p.progressBar(elapsed, currentStage, totalStages)
+	fmt.Printf("\r  %s%s%s  stage %d/%d  %d msg/s  %s%d%s pub  %s%d%s err",
+		cyan, bar, reset,
 		currentStage, totalStages,
 		rate,
 		green, published, reset,
@@ -81,31 +83,36 @@ func (p Printer) Progress(elapsed time.Duration, currentStage, totalStages int, 
 
 // Summary prints the post-run metrics summary.
 func (p Printer) Summary(s metric.Summary, elapsed time.Duration) {
-	fmt.Println()
+	// clear the progress line
+	fmt.Printf("\r%s\r", strings.Repeat(" ", 80))
 	fmt.Println()
 
-	// published / failed
-	if s.SuccessCount > 0 {
-		fmt.Printf("     %s✓%s %s\n", green, reset, p.metric("published", fmt.Sprintf("%d", s.SuccessCount)))
-	}
-	if s.ErrorCount > 0 {
-		fmt.Printf("     %s✗%s %s\n", red, reset, p.metric("failed", fmt.Sprintf("%d", s.ErrorCount)))
-	}
+	// counts
+	p.metricLine("✓", green, "published", fmt.Sprintf("%d", s.SuccessCount))
+	p.metricLine("✗", red, "failed", fmt.Sprintf("%d", s.ErrorCount))
 	fmt.Println()
 
 	// rates
-	fmt.Printf("     %s\n", p.metric("success_rate", fmt.Sprintf("%.2f%%", s.SuccessRate)))
-	fmt.Printf("     %s\n", p.metric("error_rate", fmt.Sprintf("%.2f%%", s.FailureRate)))
+	p.metricLine(" ", "", "success_rate", fmt.Sprintf("%.2f%%", s.SuccessRate))
+	p.metricLine(" ", "", "error_rate", fmt.Sprintf("%.2f%%", s.FailureRate))
 	fmt.Println()
 
 	// latencies
-	fmt.Printf("     %s\n", p.metric("publish_lat",
-		fmt.Sprintf("avg=%.2fms  p50=%.2fms  p75=%.2fms  p90=%.2fms  p99=%.2fms",
-			s.AverageLatency, s.P50Latency, s.P75Latency, s.P90Latency, s.P99Latency)))
+	p.metricLine(" ", "", "pub_latency", fmt.Sprintf(
+		"avg=%s  p50=%s  p75=%s  p90=%s  p99=%s",
+		p.fmtMs(s.AverageLatency),
+		p.fmtMs(s.P50Latency),
+		p.fmtMs(s.P75Latency),
+		p.fmtMs(s.P90Latency),
+		p.fmtMs(s.P99Latency),
+	))
 	fmt.Println()
 
-	// duration
-	fmt.Printf("     %s\n", p.metric("duration", elapsed.Truncate(time.Millisecond).String()))
+	// total duration
+	p.metricLine(" ", "", "duration", elapsed.Truncate(time.Millisecond).String())
+
+	fmt.Println()
+	p.separator()
 	fmt.Println()
 }
 
@@ -144,8 +151,34 @@ func (p Printer) PrettyJSON(v any) string {
 	return string(b)
 }
 
-// metric formats a label with dot-padding and a value, k6 style.
-func (p Printer) metric(label, value string) string {
-	dots := strings.Repeat(".", max(1, metricWidth-len(label)))
-	return fmt.Sprintf("%s%s: %s", label, dots, value)
+// separator prints a dim horizontal line.
+func (p Printer) separator() {
+	fmt.Printf("  %s%s%s\n", dim, strings.Repeat("─", lineWidth), reset)
+}
+
+// metricLine prints a single metric row: icon + dot-padded label + value.
+func (p Printer) metricLine(icon, color, label, value string) {
+	dots := strings.Repeat(".", max(1, labelWidth-len(label)))
+	if color != "" {
+		fmt.Printf("     %s%s%s %s%s%s: %s\n", color, icon, reset, label, dots, dim, value)
+	} else {
+		fmt.Printf("       %s%s%s: %s\n", label, dots, dim, value)
+	}
+}
+
+// fmtMs formats a millisecond float as a human-friendly string.
+func (p Printer) fmtMs(ms float64) string {
+	if ms < 1 {
+		return fmt.Sprintf("%.0fµs", ms*1000)
+	}
+	if ms < 1000 {
+		return fmt.Sprintf("%.1fms", ms)
+	}
+	return fmt.Sprintf("%.2fs", ms/1000)
+}
+
+// progressBar builds a visual progress indicator for the current stage.
+func (p Printer) progressBar(elapsed time.Duration, currentStage, totalStages int) string {
+	truncated := elapsed.Truncate(time.Second)
+	return fmt.Sprintf("running [%s]", truncated)
 }
