@@ -1,0 +1,8 @@
+version: "3.4"
+services:
+  pubsub:
+    image: gcr.io/google.com/cloudsdktool/cloud-sdk:321.0.0-emulators
+    entrypoint: gcloud beta emulators pubsub start --project=qstorm-project --host-port=0.0.0.0:8095
+    restart: unless-stopped
+    ports:
+      - "8095:8095"
