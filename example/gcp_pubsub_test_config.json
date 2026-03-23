@@ -1,0 +1,14 @@
+{
+  "QUEUE": {
+    "TOPIC": "qstorm-topic",
+    "TYPE": "gcp-pubsub",
+    "PAYLOAD": "{\"order_id\": \"{{uuid}}\", \"amount\": 10}",
+    "ATTRIBUTES": "{\"EVENT_TIMESTAMP\": \"{{timestamp}}\", \"SOURCE\": \"qstorm\", \"ENVIRONMENT\": \"local\"}"
+  },
+  "STAGES": [
+    {
+      "DURATION": "30s",
+      "RATE": 10
+    }
+  ]
+}
