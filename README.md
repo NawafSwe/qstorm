@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="img/qstorm-banner-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="img/qstorm-banner-light.svg">
-    <img alt="QStorm" src="img/qstorm-banner-dark.svg" width="400">
+    <img alt="QStorm" src="img/qstorm-banner-dark.svg" width="600">
   </picture>
 </p>
 
