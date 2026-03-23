@@ -3,8 +3,7 @@ export GO111MODULE=on
 #===================#
 #== Env Variables ==#
 #===================#
-DOCKER_COMPOSE_FILE ?= docker-compose.yml
-RUN_IN_DOCKER       ?= docker compose exec builder
+DOCKER_COMPOSE_FILE ?= docker-compose.yaml
 BINARY_NAME         ?= qstorm
 
 help: ## Show this help
@@ -43,7 +42,6 @@ endif
 clean: ## Remove built binaries
 	rm -rf bin/*
 
-
 #====================#
 #== QUALITY CHECKS ==#
 #====================#
@@ -57,10 +55,6 @@ test: ## Run unit tests
 	go test -tags unit -shuffle=on \
 		$$(go list ./... | grep -v mock | grep -v generated | tr '\n' ' ') \
 		-coverpkg=./... -coverprofile coverage.out
-
-test-integration: ## Run integration tests
-	@echo "Running integration tests..."
-	go test -tags integration -shuffle=on ./...
 
 fmt: ## Format code
 	gci write -s standard -s default . --skip-generated --skip-vendor && \
@@ -95,10 +89,10 @@ environment: docker-start ## Start emulator and create PubSub topic
 		echo "Topic 'qstorm-topic' created successfully" || \
 		echo "Topic may already exist"
 
-load-example: build ## Run load test with GCP PubSub example config
+run: build ## Build and run with example config
 	./bin/$(BINARY_NAME) example/gcp_pubsub_test_config.json
 
 .PHONY: help build build-docker env clean \
-        lint test test-integration fmt generate \
+        lint test fmt generate \
         docker-start docker-stop docker-clean docker-restart \
-        environment load-example
+        environment run
