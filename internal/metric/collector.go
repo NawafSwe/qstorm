@@ -50,6 +50,7 @@ type (
 		SuccessCount int64
 	}
 )
+
 type Collector struct {
 	mu           sync.Mutex
 	errorCount   atomic.Int64

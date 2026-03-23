@@ -102,6 +102,8 @@ func (e Engine) runStage(ctx context.Context, queue config.QueueConfig, stage co
 	deadlineCtx, cancel := context.WithDeadline(ctx, time.Now().Add(stage.Duration))
 	defer cancel()
 
+	stageStart := time.Now()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -110,11 +112,9 @@ func (e Engine) runStage(ctx context.Context, queue config.QueueConfig, stage co
 			return nil
 		case <-ticker.C:
 			go publishFunc(deadlineCtx)
-
-		case elapsed := <-progressTicker.C:
+		case <-progressTicker.C:
 			snapshot := e.metricAggregator.Snapshot()
-			duration := time.Second * time.Duration(elapsed.Second())
-			e.printer.Progress(duration, currentStage, totalStages, stage.Rate, snapshot.SuccessCount, snapshot.ErrorCount)
+			e.printer.Progress(time.Since(stageStart), currentStage, totalStages, stage.Rate, snapshot.SuccessCount, snapshot.ErrorCount)
 		}
 	}
 }
