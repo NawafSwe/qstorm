@@ -26,7 +26,7 @@ help: ## Show this help
 
 build: ## Build the binary
 	@echo "Building $(BINARY_NAME)..."
-	go build -o ./bin/$(BINARY_NAME) ./cmd/qstorm/main.go
+	go build -o ./bin/$(BINARY_NAME) ./cmd/qstorm/
 
 build-docker: ## Build the Docker image
 	docker build -t $(BINARY_NAME):latest . --no-cache
