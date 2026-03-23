@@ -7,11 +7,11 @@
 </p>
 
 <p align="center">
-  Load testing for async message queues — built for engineers who test more than just HTTP.
+  Load testing for async message queues. Built for engineers who test more than just HTTP.
 </p>
 
 <p align="center">
-  Inspired by <a href="https://k6.io">k6</a> — same philosophy, different protocol.
+  Inspired by <a href="https://k6.io">k6</a>. Same philosophy, different protocol.
 </p>
 
 <p align="center">
@@ -28,20 +28,20 @@
 
 ## Overview
 
-Modern backend systems rely heavily on async workers — services that consume messages from queues and process them in the background. Tools like **k6** and **Locust** are excellent for HTTP load testing, and while they can be extended to work with queues, the setup isn't always straightforward.
+Modern backend systems rely heavily on async workers: services that consume messages from queues and process them in the background. Tools like **k6** and **Locust** are excellent for HTTP load testing, and while they can be extended to work with queues, the setup isn't always straightforward.
 
-**QStorm** aims to bring that same familiar experience — stages, rates, live metrics — to message queues with zero configuration overhead. Define a config, point it at your queue, and run.
+**QStorm** aims to bring that same familiar experience (stages, rates, live metrics) to message queues with zero configuration overhead. Define a config, point it at your queue, and run.
 
-QStorm is a **client-side tool** — it runs from your machine or CI pipeline and publishes to the queue. No need to deploy it alongside your workers.
+QStorm is a **client-side tool**. It runs from your machine or CI pipeline and publishes to the queue. No need to deploy it alongside your workers.
 
 ### Features
 
-- **Stage-based load profiles** — define multi-stage tests with different rates and durations
-- **Template variables** — `{{uuid}}` and `{{timestamp}}` generate unique values per message
-- **Live progress** — real-time terminal output during test execution
-- **Accurate metrics** — HDR Histogram for latency percentiles (p50, p75, p90, p99)
-- **Graceful shutdown** — `Ctrl+C` stops the test and prints collected results
-- **Growing queue support** — PubSub today, Kafka and RabbitMQ coming next
+- **Stage-based load profiles**: define multi-stage tests with different rates and durations
+- **Template variables**: `{{uuid}}` and `{{timestamp}}` generate unique values per message
+- **Live progress**: real-time terminal output during test execution
+- **Accurate metrics**: HDR Histogram for latency percentiles (p50, p75, p90, p99)
+- **Graceful shutdown**: `Ctrl+C` stops the test and prints collected results
+- **Growing queue support**: PubSub today, Kafka and RabbitMQ coming next
 
 ## Queue Support
 
@@ -160,7 +160,7 @@ PUBSUB__PROJECT_ID=qstorm-project
 
 ### Stages
 
-Stages define how traffic changes over time. Each stage has a **duration** and a **rate** (messages per second). Stages run sequentially — use them to model ramp-ups, sustained load, spikes, and cooldowns.
+Stages define how traffic changes over time. Each stage has a **duration** and a **rate** (messages per second). Stages run sequentially. Use them to model ramp-ups, sustained load, spikes, and cooldowns.
 
 ```mermaid
 ---
@@ -191,10 +191,10 @@ Each `{{uuid}}` in a single message resolves to a **different** value.
 
 QStorm collects metrics using [HDR Histogram](https://github.com/HdrHistogram/hdrhistogram-go) for accurate latency percentiles:
 
-- **published / failed** — total message counts
-- **success_rate / error_rate** — as percentages
-- **publish_latency** — avg, p50, p75, p90, p99
-- **duration** — total test time
+- **published / failed**: total message counts
+- **success_rate / error_rate**: as percentages
+- **publish_latency**: avg, p50, p75, p90, p99
+- **duration**: total test time
 
 ## Roadmap
 
