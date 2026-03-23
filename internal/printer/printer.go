@@ -98,7 +98,7 @@ func (p Printer) Summary(s metric.Summary, elapsed time.Duration) {
 	fmt.Println()
 
 	// latencies
-	p.metricLine(" ", "", "pub_latency", fmt.Sprintf(
+	p.metricLine(" ", "", "publish_latency", fmt.Sprintf(
 		"avg=%s  p50=%s  p75=%s  p90=%s  p99=%s",
 		p.fmtMs(s.AverageLatency),
 		p.fmtMs(s.P50Latency),

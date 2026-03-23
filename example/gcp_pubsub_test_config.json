@@ -9,6 +9,10 @@
     {
       "DURATION": "30s",
       "RATE": 10
+    },
+    {
+      "DURATION": "10s",
+      "RATE": 30
     }
   ]
 }

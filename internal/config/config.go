@@ -54,9 +54,8 @@ type PubSubConfig struct {
 
 // StageConfig configuration for a stage run.
 type StageConfig struct {
-	Duration        time.Duration `mapstructure:"DURATION"`
-	StartAtDuration time.Duration `mapstructure:"START_AT_DURATION"`
-	Rate            int           `mapstructure:"RATE"`
+	Duration time.Duration `mapstructure:"DURATION"`
+	Rate     int           `mapstructure:"RATE"`
 }
 
 // LoadJSONConfig loads the configuration from the given path.
