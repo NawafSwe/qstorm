@@ -1,3 +1,4 @@
+// Package engine orchestrates load test execution across stages.
 package engine
 
 import (

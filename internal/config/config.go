@@ -1,3 +1,4 @@
+// Package config provides configuration types and loaders for qstorm.
 package config
 
 import (
@@ -46,6 +47,7 @@ type ConnectionConfig struct {
 	PubSub PubSubConfig `mapstructure:"PUBSUB"`
 }
 
+// PubSubConfig holds Google Cloud PubSub connection details.
 type PubSubConfig struct {
 	ProjectID       string      `mapstructure:"PROJECT_ID" json:",omitempty"`
 	CredentialsFile NonLoggable `mapstructure:"CREDENTIALS_FILE" json:",omitempty"`

@@ -1,3 +1,4 @@
+// Package printer provides k6-style terminal output for load test results.
 package printer
 
 import (

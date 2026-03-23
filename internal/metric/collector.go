@@ -1,3 +1,4 @@
+// Package metric provides latency and throughput collection using HDR Histogram.
 package metric
 
 import (
@@ -51,6 +52,7 @@ type (
 	}
 )
 
+// Collector records publish latencies and counts using an HDR Histogram.
 type Collector struct {
 	mu           sync.Mutex
 	errorCount   atomic.Int64
@@ -58,6 +60,7 @@ type Collector struct {
 	histogram    *hd.Histogram
 }
 
+// NewCollector creates a new Collector.
 func NewCollector() *Collector {
 	return &Collector{
 		mu:        sync.Mutex{},
@@ -65,6 +68,7 @@ func NewCollector() *Collector {
 	}
 }
 
+// Summary computes final metrics including rates and latency percentiles.
 func (c *Collector) Summary() Summary {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -92,6 +96,7 @@ func (c *Collector) Summary() Summary {
 	}
 }
 
+// Record registers a publish result — either a latency on success or an error count.
 func (c *Collector) Record(executionTime time.Duration, encounteredErr error) {
 	if encounteredErr != nil {
 		c.errorCount.Add(1)

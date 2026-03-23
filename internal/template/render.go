@@ -1,3 +1,4 @@
+// Package template handles payload and attribute variable substitution.
 package template
 
 import (
@@ -35,11 +36,13 @@ func WithTimestampGenerator(gen func() time.Time) Option {
 	}
 }
 
+// Template holds generators for template variable substitution.
 type Template struct {
 	uuidGen      func() string
 	timestampGen func() time.Time
 }
 
+// NewTemplate creates a Template with default UUID and timestamp generators.
 func NewTemplate(opts ...Option) Template {
 	t := Template{
 		uuidGen:      func() string { return uuid.NewString() },

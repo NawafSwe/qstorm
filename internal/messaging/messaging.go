@@ -1,3 +1,4 @@
+// Package messaging defines interfaces and types for queue message publishing.
 package messaging
 
 import "context"
