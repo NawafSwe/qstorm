@@ -11,41 +11,108 @@
 </p>
 
 <p align="center">
-  <a href="#the-problem">Problem</a> · <a href="#what-qstorm-does">Solution</a> · <a href="#quick-start">Quick Start</a> · <a href="#configuration">Config</a> · <a href="#queue-support">Queues</a> · <a href="#roadmap">Roadmap</a>
+  Inspired by <a href="https://k6.io">k6</a> — same philosophy, different protocol.
 </p>
 
 ---
 
-## The Problem
+## Overview
 
-Modern backend systems rely heavily on async workers — services that consume messages from queues like Google PubSub, Kafka, or RabbitMQ and process them in the background.
+Modern backend systems rely heavily on async workers — services that consume messages from queues and process them in the background. Tools like **k6** and **Locust** are great for HTTP, but they have no concept of message queues.
 
-When engineers want to load test these workers, they reach for tools like **k6** or **Locust**. These tools are excellent — but they are built for HTTP and gRPC. They have no concept of message queues.
-
-This leaves real questions unanswered:
-
-- How does your worker behave when message volume spikes 3x?
-- Do your CPU and memory limits hold under real load?
-- Does your HPA (horizontal pod autoscaler) scale as intended?
-- Does your circuit breaker trip correctly when a downstream service is slow?
-- Does your retry logic work without causing a message storm?
-- Does consumer lag recover after a burst — or does it spiral?
-
-Today, most teams either ignore these questions or hack together throwaway publisher scripts before each test. Neither approach is good enough for systems that handle real traffic.
-
-## What QStorm Does
-
-QStorm is a **load testing tool designed specifically for async message queue workers**.
-
-It publishes messages to a queue at a controlled, configurable rate — simulating realistic traffic patterns including gradual ramp-ups, sustained load, and sudden spikes. While the messages flow, it collects meaningful metrics about how the system is responding.
-
-The experience is intentionally familiar to anyone who has used k6 — **stages, rates, and a clean terminal output** — applied to the world of message queues.
-
-Inspired by [k6](https://k6.io) — same philosophy, different protocol.
+**QStorm** fills that gap. It publishes messages to a queue at a controlled, configurable rate — simulating realistic traffic patterns like gradual ramp-ups, sustained load, and sudden spikes — while collecting publish latency, success/failure rates, and percentile metrics.
 
 QStorm is a **client-side tool** — it runs from your machine or CI pipeline and publishes to the queue. No need to deploy it alongside your workers.
 
-### Example Output
+### Features
+
+- **Stage-based load profiles** — define multi-stage tests with different rates and durations
+- **Template variables** — `{{uuid}}` and `{{timestamp}}` generate unique values per message
+- **Live progress** — real-time terminal output during test execution
+- **Accurate metrics** — HDR Histogram for latency percentiles (p50, p75, p90, p99)
+- **Graceful shutdown** — `Ctrl+C` stops the test and prints collected results
+- **Growing queue support** — PubSub today, Kafka and RabbitMQ coming next
+
+## Queue Support
+
+|                                                | Queue | Status |
+|:----------------------------------------------:|---|:---:|
+|   <img src="img/pubsub-gcp.svg" width="16">    | Google Cloud PubSub | ✅ |
+|  <img src="img/kafka-apache.png" width="16">   | Apache Kafka | Planned |
+|    <img src="img/RabbitMQ.svg" width="16">     | RabbitMQ | Planned |
+|  <img src="img/pulsar-apache.svg" width="16">  | Apache Pulsar | Planned |
+| <img src="img/activeMQ-apache.svg" width="16"> | Apache ActiveMQ | Planned |
+
+## Installing
+
+### Prerequisites
+
+- Go 1.26+
+- Docker (for running queue emulators locally)
+
+### Build from source
+
+```bash
+git clone https://github.com/nawafswe/qstorm.git
+cd qstorm
+make build
+```
+
+## Usage
+
+### 1. Start a queue emulator (for local testing)
+
+```bash
+make environment
+```
+
+This starts the Google Cloud PubSub emulator via Docker and creates a test topic.
+
+### 2. Configure connection credentials
+
+```bash
+make env  # copies .env.sample → .env
+```
+
+```env
+PUBSUB__EMULATOR_HOST=localhost:8095
+PUBSUB__PROJECT_ID=qstorm-project
+```
+
+### 3. Create a test config
+
+```json
+{
+  "QUEUE": {
+    "TOPIC": "qstorm-topic",
+    "TYPE": "gcp-pubsub",
+    "PAYLOAD": "{\"order_id\": \"{{uuid}}\", \"customer_id\": \"{{uuid}}\", \"amount\": 10}",
+    "ATTRIBUTES": "{\"EVENT_TIMESTAMP\": \"{{timestamp}}\", \"SOURCE\": \"qstorm\"}"
+  },
+  "STAGES": [
+    { "DURATION": "30s", "RATE": 50 },
+    { "DURATION": "60s", "RATE": 200 },
+    { "DURATION": "60s", "RATE": 50 }
+  ]
+}
+```
+
+### 4. Run
+
+```bash
+# positional argument
+./bin/qstorm config.json
+
+# with flags
+./bin/qstorm --config config.json --env .env
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--config` | _(required)_ | Path to the JSON test config file |
+| `--env` | `.env` | Path to the `.env` connection file |
+
+### Example output
 
 ```
       ___  ____  _
@@ -72,106 +139,18 @@ QStorm is a **client-side tool** — it runs from your machine or CI pipeline an
        success_rate...: 99.92%
        error_rate.....: 0.08%
 
-       publish_latency....: avg=2.1ms  p50=1.9ms  p75=2.4ms  p90=3.2ms  p99=8.1ms
+       publish_latency: avg=2.1ms  p50=1.9ms  p75=2.4ms  p90=3.2ms  p99=8.1ms
 
        duration.......: 2m30.012s
 
   ──────────────────────────────────────────────────────────────────────
 ```
 
-## Quick Start
+## Concepts
 
-### Prerequisites
+### Stages
 
-- Go 1.26+
-- Docker (for running queue emulators locally)
-
-### 1. Clone and build
-
-```bash
-git clone https://github.com/nawafswe/qstorm.git
-cd qstorm
-make build
-```
-
-### 2. Start the PubSub emulator
-
-```bash
-make environment
-```
-
-This starts the Google Cloud PubSub emulator via Docker and creates a test topic.
-
-### 3. Configure your environment
-
-```bash
-make env  # copies .env.sample → .env
-```
-
-Edit `.env` with your connection details:
-
-```env
-PUBSUB__EMULATOR_HOST=localhost:8095
-PUBSUB__PROJECT_ID=qstorm-project
-```
-
-### 4. Run a load test
-
-```bash
-make run
-```
-
-Or directly:
-
-```bash
-# positional argument
-./bin/qstorm example/gcp_pubsub_test_config.json
-
-# with flags
-./bin/qstorm --config example/gcp_pubsub_test_config.json --env .env
-```
-
-| Flag | Default | Description |
-|---|---|---|
-| `--config` | _(required)_ | Path to the JSON test config file |
-| `--env` | `.env` | Path to the `.env` connection file |
-
-Press `Ctrl+C` at any time for a graceful shutdown — QStorm will print the summary of whatever was collected.
-
-## Configuration
-
-QStorm uses a JSON config file to define the test and a `.env` file for connection credentials.
-
-### Test config (`config.json`)
-
-```json
-{
-  "QUEUE": {
-    "TOPIC": "qstorm-topic",
-    "TYPE": "gcp-pubsub",
-    "PAYLOAD": "{\"order_id\": \"{{uuid}}\", \"customer_id\": \"{{uuid}}\", \"amount\": 10}",
-    "ATTRIBUTES": "{\"EVENT_TIMESTAMP\": \"{{timestamp}}\", \"SOURCE\": \"qstorm\"}"
-  },
-  "STAGES": [
-    { "DURATION": "30s", "RATE": 50 },
-    { "DURATION": "60s", "RATE": 200 },
-    { "DURATION": "60s", "RATE": 50 }
-  ]
-}
-```
-
-### Template variables
-
-| Variable | Description | Example output |
-|---|---|---|
-| `{{uuid}}` | Unique UUID per occurrence | `f47ac10b-58cc-4372-a567-0e02b2c3d479` |
-| `{{timestamp}}` | Current UTC time (RFC 3339) | `2026-03-23T14:30:00Z` |
-
-Each `{{uuid}}` in a single message resolves to a **different** value — no duplicates.
-
-### Stage-based load profile
-
-Stages let you model realistic traffic patterns:
+Stages define how traffic changes over time. Each stage has a **duration** and a **rate** (messages per second). Stages run sequentially — use them to model ramp-ups, sustained load, spikes, and cooldowns.
 
 ```mermaid
 ---
@@ -189,84 +168,23 @@ xychart-beta
     line [0, 100, 500, 500, 1000, 200, 200]
 ```
 
-## How It Works
+### Template variables
 
-```mermaid
-flowchart LR
-    A[Config File] --> B[Parse & Validate]
-    B --> C[Connect to Queue]
-    C --> D[Rate Controller]
-    D --> E[Execute Stages]
-    E --> F[Publish Messages]
-    F --> G[(Queue)]
-    E --> H[Collect Metrics]
-    H --> I[Print Summary]
-```
-
-### Architecture
-
-QStorm is built around a few core components:
-
-- **Engine** — orchestrates stage execution, controls publish rate via tickers, collects metrics
-- **Messenger** — interface-based queue client (swap in PubSub, Kafka, etc.)
-- **Metric Collector** — HDR Histogram for accurate latency percentiles, atomic counters for throughput
-- **Template Renderer** — replaces `{{uuid}}` and `{{timestamp}}` in payloads per-message
-- **Printer** — k6-style terminal output with live progress and post-run summary
-
-## Queue Support
-
-| | Queue | Status |
+| Variable | Description | Example |
 |---|---|---|
-| <img src="https://cdn.simpleicons.org/googlecloud" width="16"> | Google Cloud PubSub | ✅ |
-| <img src="https://cdn.simpleicons.org/apachekafka" width="16"> | Apache Kafka | Planned |
-| <img src="https://cdn.simpleicons.org/rabbitmq" width="16"> | RabbitMQ | Planned |
-| <img src="https://cdn.simpleicons.org/apachepulsar" width="16"> | Apache Pulsar | Planned |
-| <img src="https://cdn.simpleicons.org/apache" width="16"> | Apache ActiveMQ | Planned |
+| `{{uuid}}` | Unique UUID per occurrence | `f47ac10b-58cc-4372-a567-0e02b2c3d479` |
+| `{{timestamp}}` | Current UTC time (RFC 3339) | `2026-03-23T14:30:00Z` |
 
-Adding a new queue requires implementing a single interface:
+Each `{{uuid}}` in a single message resolves to a **different** value.
 
-```go
-type Messenger interface {
-    Publish(ctx context.Context, topic string, message Message) error
-    Connect(ctx context.Context, topic string) error
-    Close() error
-}
-```
+### Metrics
 
-## Docker
+QStorm collects metrics using [HDR Histogram](https://github.com/HdrHistogram/hdrhistogram-go) for accurate latency percentiles:
 
-### Build the image
-
-```bash
-make build-docker
-```
-
-### Run with Docker Compose
-
-```bash
-make environment   # start emulator + create topic
-make run           # build and run the load test
-```
-
-## Makefile targets
-
-| Target | Description |
-|---|---|
-| `make build` | Build the binary |
-| `make run` | Build and run with example config |
-| `make build-docker` | Build the Docker image |
-| `make environment` | Start emulator and create PubSub topic |
-| `make test` | Run unit tests |
-| `make lint` | Run golangci-lint |
-| `make fmt` | Format code |
-| `make clean` | Remove built binaries |
-
-## Who It's For
-
-- **Backend engineers** who run async workers in production and want confidence in their resource configuration
-- **Platform teams** practicing chaos engineering who need to stress test queue consumers
-- **Engineers** who want to validate retry logic, circuit breakers, and dead letter queue behavior under real load
-- **Anyone** tired of writing throwaway publisher scripts before every load test
+- **published / failed** — total message counts
+- **success_rate / error_rate** — as percentages
+- **publish_latency** — avg, p50, p75, p90, p99
+- **duration** — total test time
 
 ## Roadmap
 
@@ -278,7 +196,6 @@ make run           # build and run the load test
 - [ ] Custom template functions (`{{rand_int 1 100}}`, `{{rand_string 10}}`)
 - [ ] Config validation with clear error messages
 - [ ] Ramp-up within a stage (linear increase from 0 to target rate)
-- [ ] Consumer lag monitoring (read queue backlog during test)
 
 ## License
 
