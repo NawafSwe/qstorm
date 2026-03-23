@@ -117,18 +117,12 @@ See [Configuration Reference](#configuration-reference) for full details.
 
 # with flags
 ./bin/qstorm --config config.json --env .env
-
-# with environment variables (no .env file needed)
-PUBSUB__PROJECT_ID=my-project PUBSUB__EMULATOR_HOST=localhost:8095 \
-  ./bin/qstorm --config config.json --env ""
 ```
 
 | Flag | Default | Description |
 |---|---|---|
 | `--config` | _(required)_ | Path to the JSON test config file |
-| `--env` | `.env` | Path to the `.env` connection file. Pass `""` to use OS environment variables only |
-
-Connection credentials can come from a `.env` file, OS environment variables, or both. OS environment variables take precedence over the file.
+| `--env` | `.env` | Path to the `.env` connection file |
 
 ### Example output
 
@@ -168,7 +162,7 @@ Connection credentials can come from a `.env` file, OS environment variables, or
 
 QStorm uses two separate sources for configuration:
 - A **JSON config file** defines the test (what to publish, how fast, for how long)
-- **Environment variables** (or a `.env` file) provide connection credentials
+- A **`.env` file** provides connection credentials
 
 ### Test config (JSON)
 
@@ -198,9 +192,9 @@ Each stage runs sequentially. Define as many as needed.
 | `DURATION` | string | yes | How long the stage runs (e.g. `"30s"`, `"2m"`) |
 | `RATE` | int | yes | Messages per second during this stage |
 
-### Connection config (environment)
+### Connection config (`.env` file)
 
-Connection credentials are loaded from environment variables. You can provide them via a `.env` file, OS environment variables, or both (OS env takes precedence).
+Connection credentials are loaded from a `.env` file passed via `--env`. Use `__` (double underscore) as the delimiter for nested keys.
 
 #### Google Cloud PubSub
 
@@ -209,8 +203,6 @@ Connection credentials are loaded from environment variables. You can provide th
 | `PUBSUB__PROJECT_ID` | yes | GCP project ID |
 | `PUBSUB__EMULATOR_HOST` | no | Emulator address (e.g. `localhost:8095`). When set, connects to emulator instead of GCP |
 | `PUBSUB__CREDENTIALS_FILE` | no | Service account JSON credentials |
-
-> Note: use `__` (double underscore) as the delimiter for nested keys.
 
 ## Concepts
 

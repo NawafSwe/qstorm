@@ -35,7 +35,7 @@ func main() {
 	if err != nil {
 		ptr.Fatal("failed to load config", err)
 	}
-	connEnv, err := config.LoadConnConfigFromEnv(*envPath)
+	connEnv, err := config.LoadConnConfig(*envPath)
 	if err != nil {
 		ptr.Fatal("failed to load connection config", err)
 	}

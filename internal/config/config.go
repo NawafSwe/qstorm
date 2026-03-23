@@ -79,8 +79,8 @@ func LoadJSONConfig(path string) (Config, error) {
 	return cfg, nil
 }
 
-// LoadConnConfigFromEnv loads connection credentials from an env file.
-func LoadConnConfigFromEnv(path string) (ConnectionConfig, error) {
+// LoadConnConfig loads connection credentials from an env file.
+func LoadConnConfig(path string) (ConnectionConfig, error) {
 	const delimiter = "__"
 	vpr := viper.NewWithOptions(viper.KeyDelimiter(delimiter))
 	vpr.SetConfigFile(path)
