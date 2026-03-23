@@ -11,8 +11,10 @@ import (
 	pubsub2 "google.golang.org/genproto/googleapis/pubsub/v1"
 )
 
+// Option configures optional Client behavior.
 type Option func(*Client)
 
+// WithServiceAccountCredentials sets the GCP service account JSON credentials for authentication.
 func WithServiceAccountCredentials(credentials *string) Option {
 	return func(c *Client) {
 		if credentials != nil {
