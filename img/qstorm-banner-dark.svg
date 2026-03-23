@@ -1,9 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="140" viewBox="0 0 800 140">
-  <rect x="12" y="20" width="110" height="100" rx="50" fill="none" stroke="#4a9af5" stroke-width="5"/>
-  <rect x="30" y="40" width="22" height="60" rx="4" fill="#4a9af5" opacity="0.15"/>
-  <rect x="56" y="40" width="22" height="60" rx="4" fill="#4a9af5" opacity="0.3"/>
-  <rect x="82" y="40" width="22" height="60" rx="4" fill="#4a9af5" opacity="0.5"/>
-  <path d="M108,38 L96,62 L110,62 L94,92" fill="none" stroke="#4a9af5" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="156" y="68" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="52" font-weight="600" letter-spacing="2" fill="#e6edf3">qstorm</text>
-  <text x="160" y="96" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="16" letter-spacing="5.5" fill="#7d8590">LOAD TEST YOUR QUEUES</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="120" viewBox="0 0 600 120">
+  <!-- storm cloud -->
+  <circle cx="42" cy="28" r="17" fill="#3b82f6"/>
+  <circle cx="62" cy="26" r="14" fill="#3b82f6"/>
+  <circle cx="30" cy="32" r="12" fill="#3b82f6"/>
+  <circle cx="72" cy="32" r="10" fill="#3b82f6"/>
+  <rect x="20" y="30" width="54" height="14" rx="2" fill="#3b82f6"/>
+
+  <!-- lightning bolt -->
+  <path d="M50 42 L44 58 L54 58 L46 74" fill="none" stroke="#fbbf24" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- queue blocks -->
+  <rect x="14" y="82" width="20" height="14" rx="3" fill="#3b82f6" opacity="0.4"/>
+  <rect x="38" y="82" width="20" height="14" rx="3" fill="#3b82f6" opacity="0.65"/>
+  <rect x="62" y="82" width="20" height="14" rx="3" fill="#3b82f6" opacity="0.9"/>
+
+  <!-- arrow out -->
+  <path d="M86 89 L96 89 M92 85 L96 89 L92 93" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- text: qstorm -->
+  <text x="120" y="62" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="46" font-weight="700" letter-spacing="2" fill="#e6edf3">qstorm</text>
+
+  <!-- tagline -->
+  <text x="123" y="86" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" letter-spacing="4.5" fill="#7d8590">LOAD TEST YOUR QUEUES</text>
 </svg>

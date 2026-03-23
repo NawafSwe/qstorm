@@ -1,8 +1,4 @@
 <p align="center">
-  <img src="img/qstorm-icon.svg" alt="QStorm icon" width="80">
-</p>
-
-<p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="img/qstorm-banner-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="img/qstorm-banner-light.svg">
@@ -276,7 +272,6 @@ make run           # build and run the load test
 
 - [ ] Apache Kafka support
 - [ ] RabbitMQ support
-- [x] CLI flags (`--config`, `--env`)
 - [ ] Threshold assertions (fail the test if p99 > Xms or error rate > Y%)
 - [ ] Multiple publisher concurrency (parallel goroutine pools)
 - [ ] Result export (JSON, CSV) for CI/CD integration
