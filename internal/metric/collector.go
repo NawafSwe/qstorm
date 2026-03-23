@@ -20,29 +20,36 @@ const (
 	microsPerMS        = 1000.0
 )
 
-// Summary encapsulates the summary of metric collection.
-type Summary struct {
-	ErrorCount   int64
-	SuccessCount int64
+type (
+	// Summary encapsulates the summary of metric collection.
+	Summary struct {
+		ErrorCount   int64
+		SuccessCount int64
 
-	SuccessRate float64
-	FailureRate float64
+		SuccessRate float64
+		FailureRate float64
 
-	// AverageLatency in milliseconds.
-	AverageLatency float64
+		// AverageLatency in milliseconds.
+		AverageLatency float64
 
-	// P99Latency in milliseconds.
-	P99Latency float64
+		// P99Latency in milliseconds.
+		P99Latency float64
 
-	// P90Latency in milliseconds.
-	P90Latency float64
+		// P90Latency in milliseconds.
+		P90Latency float64
 
-	// P75Latency in milliseconds.
-	P75Latency float64
+		// P75Latency in milliseconds.
+		P75Latency float64
 
-	// P50Latency in milliseconds.
-	P50Latency float64
-}
+		// P50Latency in milliseconds.
+		P50Latency float64
+	}
+	// Snapshot is a snapshot of the metric collection.
+	Snapshot struct {
+		ErrorCount   int64
+		SuccessCount int64
+	}
+)
 type Collector struct {
 	mu           sync.Mutex
 	errorCount   atomic.Int64
@@ -97,4 +104,12 @@ func (c *Collector) Record(executionTime time.Duration, encounteredErr error) {
 	_ = c.histogram.RecordValue(executionTime.Microseconds())
 
 	c.mu.Unlock()
+}
+
+// Snapshot returns a snapshot of the metric collection.
+func (c *Collector) Snapshot() Snapshot {
+	return Snapshot{
+		ErrorCount:   c.errorCount.Load(),
+		SuccessCount: c.successCount.Load(),
+	}
 }
