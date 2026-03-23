@@ -80,7 +80,6 @@ func LoadJSONConfig(path string) (Config, error) {
 
 // LoadConnConfigFromEnv loads connection credentials from an env file.
 func LoadConnConfigFromEnv(path string) (ConnectionConfig, error) {
-
 	const delimiter = "__"
 	vpr := viper.NewWithOptions(viper.KeyDelimiter(delimiter))
 	vpr.SetConfigFile(path)

@@ -1,7 +1,7 @@
 package template
 
 import (
-	"strings"
+	"regexp"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,13 +9,14 @@ import (
 )
 
 const (
-	uuidTemplate      = "{{uuid}}"
-	timestampTemplate = "{{timestamp}}"
+	uuidTemplate      = `\{\{uuid\}\}`
+	timestampTemplate = `\{\{timestamp\}\}`
 )
 
 type Template struct {
 	uuidGen      func() string
 	timestampGen func() time.Time
+	replacers    map[string]func() string
 }
 
 func NewTemplate() Template {
@@ -27,11 +28,21 @@ func NewTemplate() Template {
 
 func (t Template) Render(queue config.QueueConfig) (config.QueueConfig, error) {
 	// replace all templating values.
-	queue.Payload = strings.ReplaceAll(queue.Payload, "{{uuid}}", t.uuidGen())
-	queue.Payload = strings.ReplaceAll(queue.Payload, "{{timestamp}}", t.timestampGen().Format(time.RFC3339))
-
-	queue.Attributes = strings.ReplaceAll(queue.Attributes, "{{uuid}}", t.uuidGen())
-	queue.Attributes = strings.ReplaceAll(queue.Attributes, "{{timestamp}}", t.timestampGen().Format(time.RFC3339))
-
+	replacers := map[string]func() string{
+		uuidTemplate:      t.uuidGen,
+		timestampTemplate: func() string { return t.timestampGen().Format(time.RFC3339) },
+	}
+	for pattern, replacer := range replacers {
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return config.QueueConfig{}, err
+		}
+		queue.Payload = string(re.ReplaceAllFunc([]byte(queue.Payload), func(_ []byte) []byte {
+			return []byte(replacer())
+		}))
+		queue.Attributes = string(re.ReplaceAllFunc([]byte(queue.Attributes), func(_ []byte) []byte {
+			return []byte(replacer())
+		}))
+	}
 	return queue, nil
 }
