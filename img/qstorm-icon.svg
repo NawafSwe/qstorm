@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 160 180">
-  <rect x="8" y="40" width="144" height="100" rx="50" fill="none" stroke="#1a73e8" stroke-width="6"/>
-  <rect x="30" y="64" width="26" height="52" rx="4" fill="#1a73e8" opacity="0.15"/>
-  <rect x="62" y="64" width="26" height="52" rx="4" fill="#1a73e8" opacity="0.3"/>
-  <rect x="94" y="64" width="26" height="52" rx="4" fill="#1a73e8" opacity="0.5"/>
-  <path d="M134,68 L122,90 L136,90 L118,118" fill="none" stroke="#1a73e8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 160 160">
+  <rect x="8" y="30" width="144" height="100" rx="50" fill="none" stroke="#1a73e8" stroke-width="6"/>
+  <rect x="30" y="54" width="26" height="52" rx="4" fill="#1a73e8" opacity="0.15"/>
+  <rect x="62" y="54" width="26" height="52" rx="4" fill="#1a73e8" opacity="0.3"/>
+  <rect x="94" y="54" width="26" height="52" rx="4" fill="#1a73e8" opacity="0.5"/>
+  <path d="M134,58 L122,80 L136,80 L118,108" fill="none" stroke="#1a73e8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
