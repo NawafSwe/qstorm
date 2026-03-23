@@ -65,7 +65,9 @@ func (c Client) Connect(ctx context.Context, topic string) error {
 // Publish sends a message to the given PubSub topic and waits for confirmation.
 func (c Client) Publish(ctx context.Context, topic string, message messaging.Message) error {
 	publisher := c.client.Publisher(topic)
-
+	if message.OrderingKey != "" {
+		publisher.EnableMessageOrdering = true
+	}
 	var attrs map[string]string
 	if err := json.Unmarshal([]byte(message.Attributes), &attrs); err != nil {
 		return fmt.Errorf("failed to unmarshal attributes: %w", err)

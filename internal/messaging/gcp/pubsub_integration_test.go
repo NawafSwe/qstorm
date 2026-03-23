@@ -92,7 +92,7 @@ func TestClient_Publish(t *testing.T) {
 			},
 		},
 
-		"fails with ordering key when not enabled": {
+		"publishes with ordering key": {
 			topic: testTopic,
 			message: messaging.Message{
 				ID:          "test-id-2",
@@ -100,7 +100,6 @@ func TestClient_Publish(t *testing.T) {
 				Attributes:  `{"SOURCE":"qstorm-test"}`,
 				OrderingKey: "order-key",
 			},
-			wantErr: true,
 		},
 
 		"publishes with empty data": {
