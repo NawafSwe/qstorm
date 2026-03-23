@@ -14,13 +14,20 @@
   Inspired by <a href="https://k6.io">k6</a> — same philosophy, different protocol.
 </p>
 
+<p align="center">
+  <a href="https://github.com/nawafswe/qstorm/actions/workflows/test.yaml"><img src="https://github.com/nawafswe/qstorm/actions/workflows/test.yaml/badge.svg" alt="Tests"></a>
+  <a href="https://github.com/nawafswe/qstorm/actions/workflows/linter.yaml"><img src="https://github.com/nawafswe/qstorm/actions/workflows/linter.yaml/badge.svg" alt="Lint"></a>
+  <a href="https://codecov.io/gh/nawafswe/qstorm"><img src="https://codecov.io/gh/nawafswe/qstorm/branch/main/graph/badge.svg" alt="Coverage"></a>
+  <a href="https://github.com/nawafswe/qstorm/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
+</p>
+
 ---
 
 ## Overview
 
-Modern backend systems rely heavily on async workers — services that consume messages from queues and process them in the background. Tools like **k6** and **Locust** are great for HTTP, but they have no concept of message queues.
+Modern backend systems rely heavily on async workers — services that consume messages from queues and process them in the background. Tools like **k6** and **Locust** are excellent for HTTP load testing, and while they can be extended to work with queues, the setup isn't always straightforward.
 
-**QStorm** fills that gap. It publishes messages to a queue at a controlled, configurable rate — simulating realistic traffic patterns like gradual ramp-ups, sustained load, and sudden spikes — while collecting publish latency, success/failure rates, and percentile metrics.
+**QStorm** aims to bring that same familiar experience — stages, rates, live metrics — to message queues with zero configuration overhead. Define a config, point it at your queue, and run.
 
 QStorm is a **client-side tool** — it runs from your machine or CI pipeline and publishes to the queue. No need to deploy it alongside your workers.
 
@@ -190,12 +197,9 @@ QStorm collects metrics using [HDR Histogram](https://github.com/HdrHistogram/hd
 
 - [ ] Apache Kafka support
 - [ ] RabbitMQ support
-- [ ] Threshold assertions (fail the test if p99 > Xms or error rate > Y%)
-- [ ] Multiple publisher concurrency (parallel goroutine pools)
+- [ ] Threshold assertions (fail if p99 > Xms or error rate > Y%)
 - [ ] Result export (JSON, CSV) for CI/CD integration
 - [ ] Custom template functions (`{{rand_int 1 100}}`, `{{rand_string 10}}`)
-- [ ] Config validation with clear error messages
-- [ ] Ramp-up within a stage (linear increase from 0 to target rate)
 
 ## License
 

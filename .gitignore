@@ -30,7 +30,7 @@ go.work.sum
 vendor
 
 # Editor/IDE
- .idea
- .vscode
+.idea
+.vscode
 
 bin

@@ -50,11 +50,15 @@ lint: ## Run golangci-lint
 	docker run -t --rm -v ${PWD}:/app -v $$(go env GOMODCACHE):/go/pkg/mod \
 		-w /app golangci/golangci-lint:v2.7.0 golangci-lint run -v
 
-test: ## Run unit tests
+test: ## Run unit tests with coverage
 	@echo "Running unit tests..."
-	go test -tags unit -shuffle=on \
+	go test -tags unit -race -shuffle=on \
 		$$(go list ./... | grep -v mock | grep -v generated | tr '\n' ' ') \
 		-coverpkg=./... -coverprofile coverage.out
+
+test-integration: ## Run integration tests (requires emulator)
+	@echo "Running integration tests..."
+	go test -tags integration -race -v ./... -timeout 60s
 
 fmt: ## Format code
 	gci write -s standard -s default . --skip-generated --skip-vendor && \
@@ -93,6 +97,6 @@ run: build ## Build and run with example config
 	./bin/$(BINARY_NAME) example/gcp_pubsub_test_config.json
 
 .PHONY: help build build-docker env clean \
-        lint test fmt generate \
+        lint test test-integration fmt generate \
         docker-start docker-stop docker-clean docker-restart \
         environment run

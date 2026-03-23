@@ -1,3 +1,4 @@
+// Package gcp provides a Google Cloud PubSub messaging client.
 package gcp
 
 import (
@@ -11,8 +12,10 @@ import (
 	pubsub2 "google.golang.org/genproto/googleapis/pubsub/v1"
 )
 
+// Option configures optional Client behavior.
 type Option func(*Client)
 
+// WithServiceAccountCredentials sets the GCP service account JSON credentials for authentication.
 func WithServiceAccountCredentials(credentials *string) Option {
 	return func(c *Client) {
 		if credentials != nil {
@@ -25,11 +28,13 @@ type options struct {
 	ServiceAccountCredentials *string
 }
 
+// Client wraps a Google Cloud PubSub client.
 type Client struct {
 	client *pubsub.Client
 	opts   options
 }
 
+// NewClient creates a new PubSub client for the given project.
 func NewClient(ctx context.Context, projectID string, opts ...Option) (Client, error) {
 	c := Client{}
 	for _, opt := range opts {
@@ -43,6 +48,7 @@ func NewClient(ctx context.Context, projectID string, opts ...Option) (Client, e
 	return c, nil
 }
 
+// Connect verifies that the given topic exists.
 func (c Client) Connect(ctx context.Context, topic string) error {
 	tt, err := c.client.TopicAdminClient.GetTopic(ctx, &pubsub2.GetTopicRequest{
 		Topic: topic,
@@ -56,9 +62,12 @@ func (c Client) Connect(ctx context.Context, topic string) error {
 	return nil
 }
 
+// Publish sends a message to the given PubSub topic and waits for confirmation.
 func (c Client) Publish(ctx context.Context, topic string, message messaging.Message) error {
 	publisher := c.client.Publisher(topic)
-
+	if message.OrderingKey != "" {
+		publisher.EnableMessageOrdering = true
+	}
 	var attrs map[string]string
 	if err := json.Unmarshal([]byte(message.Attributes), &attrs); err != nil {
 		return fmt.Errorf("failed to unmarshal attributes: %w", err)
@@ -78,6 +87,7 @@ func (c Client) Publish(ctx context.Context, topic string, message messaging.Mes
 	return nil
 }
 
+// Close shuts down the PubSub client.
 func (c Client) Close() error {
 	return c.client.Close()
 }

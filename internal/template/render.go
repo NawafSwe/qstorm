@@ -1,3 +1,4 @@
+// Package template handles payload and attribute variable substitution.
 package template
 
 import (
@@ -14,16 +15,43 @@ var (
 	timestampPattern = regexp.MustCompile(`\{\{timestamp\}\}`)
 )
 
+// Option configures optional Template behavior.
+type Option func(*Template)
+
+// WithUUIDGenerator overrides the default UUID generator.
+func WithUUIDGenerator(gen func() string) Option {
+	return func(t *Template) {
+		if gen != nil {
+			t.uuidGen = gen
+		}
+	}
+}
+
+// WithTimestampGenerator overrides the default timestamp generator.
+func WithTimestampGenerator(gen func() time.Time) Option {
+	return func(t *Template) {
+		if gen != nil {
+			t.timestampGen = gen
+		}
+	}
+}
+
+// Template holds generators for template variable substitution.
 type Template struct {
 	uuidGen      func() string
 	timestampGen func() time.Time
 }
 
-func NewTemplate() Template {
-	return Template{
+// NewTemplate creates a Template with default UUID and timestamp generators.
+func NewTemplate(opts ...Option) Template {
+	t := Template{
 		uuidGen:      func() string { return uuid.NewString() },
 		timestampGen: func() time.Time { return time.Now().UTC() },
 	}
+	for _, opt := range opts {
+		opt(&t)
+	}
+	return t
 }
 
 // Render replaces template variables in Payload and Attributes.

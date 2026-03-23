@@ -1,3 +1,4 @@
+// Package engine orchestrates load test execution across stages.
 package engine
 
 import (
@@ -9,6 +10,40 @@ import (
 	"github.com/nawafswe/qstorm/internal/messaging"
 	"github.com/nawafswe/qstorm/internal/metric"
 )
+
+const (
+	progressTickInterval = 600 * time.Millisecond
+)
+
+// Option configures optional Engine behavior.
+type Option func(*Engine)
+
+// WithUUIDGenerator overrides the default UUID generator (uuid.NewString).
+func WithUUIDGenerator(gen func() string) Option {
+	return func(engine *Engine) {
+		if gen != nil {
+			engine.uuidGen = gen
+		}
+	}
+}
+
+// WithTimeStampGenerator overrides the default timestamp generator (time.Now().UTC()).
+func WithTimeStampGenerator(gen func() time.Time) Option {
+	return func(engine *Engine) {
+		if gen != nil {
+			engine.timeStampGen = gen
+		}
+	}
+}
+
+// WithProgressTicker overrides the interval at which live progress is printed.
+func WithProgressTicker(ticker time.Duration) Option {
+	return func(engine *Engine) {
+		if ticker > 0 {
+			engine.progressTicker = ticker
+		}
+	}
+}
 
 //go:generate go tool mockgen -source=${GOFILE} -destination=mock/${GOFILE} -package=mock
 type (
@@ -39,11 +74,12 @@ type Engine struct {
 	metricAggregator metricAggregator
 	uuidGen          func() string
 	timeStampGen     func() time.Time
+	progressTicker   time.Duration
 }
 
 // NewEngine creates and return a new Engine.
-func NewEngine(templateRenderer templateRenderer, messenger messenger, metricAggregator metricAggregator, printer printer) Engine {
-	return Engine{
+func NewEngine(templateRenderer templateRenderer, messenger messenger, metricAggregator metricAggregator, printer printer, option ...Option) Engine {
+	e := Engine{
 		templateRenderer: templateRenderer,
 		messenger:        messenger,
 		uuidGen:          uuid.NewString,
@@ -52,7 +88,12 @@ func NewEngine(templateRenderer templateRenderer, messenger messenger, metricAgg
 		},
 		metricAggregator: metricAggregator,
 		printer:          printer,
+		progressTicker:   progressTickInterval,
 	}
+	for _, opt := range option {
+		opt(&e)
+	}
+	return e
 }
 
 // Run executes all stages sequentially, accumulating publish results.
@@ -95,7 +136,7 @@ func (e Engine) runStage(ctx context.Context, queue config.QueueConfig, stage co
 	ticker := time.NewTicker(time.Second / time.Duration(stage.Rate))
 	defer ticker.Stop()
 
-	progressTicker := time.NewTicker(600 * time.Millisecond)
+	progressTicker := time.NewTicker(e.progressTicker)
 	defer progressTicker.Stop()
 
 	deadline := time.After(stage.Duration)

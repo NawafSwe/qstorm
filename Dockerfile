@@ -11,7 +11,7 @@ WORKDIR $APP_HOME
 
 COPY --chown=builder:builder . $APP_HOME/
 
-RUN go build -o ./bin/qstorm ./cmd/qstorm/main.go 
+RUN go build -o ./bin/qstorm ./cmd/qstorm/
 
 #################################
 # FINAL STAGE
@@ -32,4 +32,3 @@ WORKDIR $APP_HOME
 COPY --chown=runner:runner --from=builder /home/builder/bin/ .
 
 ENTRYPOINT ["/home/runner/bin/qstorm"]
-CMD ["help"]
