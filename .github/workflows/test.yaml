@@ -1,0 +1,72 @@
+name: "Test"
+
+on:
+  push:
+    branches: [master, main]
+    paths-ignore:
+      - "*.md"
+  pull_request:
+    branches: [main, master]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.1"
+          cache-dependency-path: go.sum
+
+      - name: Run unit tests
+        run: make test
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.out
+          flags: unit
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      pubsub:
+        image: gcr.io/google.com/cloudsdktool/cloud-sdk:emulators
+        ports:
+          - 8095:8095
+        options: >-
+          --entrypoint "gcloud beta emulators pubsub start --project=qstorm-project --host-port=0.0.0.0:8095"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.1"
+          cache-dependency-path: go.sum
+
+      - name: Wait for PubSub emulator
+        run: |
+          for i in $(seq 1 30); do
+            curl -s http://localhost:8095 > /dev/null 2>&1 && break
+            sleep 1
+          done
+
+      - name: Create PubSub topic
+        run: |
+          curl -s -X PUT http://localhost:8095/v1/projects/qstorm-project/topics/qstorm-topic
+
+      - name: Run integration tests
+        env:
+          PUBSUB_EMULATOR_HOST: localhost:8095
+        run: |
+          go test -tags integration -race -v ./... -timeout 60s
