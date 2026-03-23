@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/pubsub/v2"
+	googleproto "cloud.google.com/go/pubsub/v2/apiv1/pubsubpb"
 	"github.com/nawafswe/qstorm/internal/messaging"
 	"google.golang.org/api/option"
-	pubsub2 "google.golang.org/genproto/googleapis/pubsub/v1"
 )
 
 // Option configures optional Client behavior.
@@ -50,7 +50,7 @@ func NewClient(ctx context.Context, projectID string, opts ...Option) (Client, e
 
 // Connect verifies that the given topic exists.
 func (c Client) Connect(ctx context.Context, topic string) error {
-	tt, err := c.client.TopicAdminClient.GetTopic(ctx, &pubsub2.GetTopicRequest{
+	tt, err := c.client.TopicAdminClient.GetTopic(ctx, &googleproto.GetTopicRequest{
 		Topic: topic,
 	})
 	if err != nil {

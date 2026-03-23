@@ -16,9 +16,12 @@
 
 <p align="center">
   <a href="https://github.com/nawafswe/qstorm/actions/workflows/test.yaml"><img src="https://github.com/nawafswe/qstorm/actions/workflows/test.yaml/badge.svg" alt="Tests"></a>
-  <a href="https://github.com/nawafswe/qstorm/actions/workflows/linter.yaml"><img src="https://github.com/nawafswe/qstorm/actions/workflows/linter.yaml/badge.svg" alt="Lint"></a>
   <a href="https://codecov.io/gh/nawafswe/qstorm"><img src="https://codecov.io/gh/nawafswe/qstorm/branch/main/graph/badge.svg" alt="Coverage"></a>
+  <a href="https://goreportcard.com/report/github.com/nawafswe/qstorm"><img src="https://goreportcard.com/badge/github.com/nawafswe/qstorm" alt="Go Report"></a>
   <a href="https://github.com/nawafswe/qstorm/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
+  <a href="https://github.com/nawafswe/qstorm/releases"><img src="https://img.shields.io/github/v/release/nawafswe/qstorm" alt="Release"></a>
+  <a href="https://github.com/nawafswe/qstorm/stargazers"><img src="https://img.shields.io/github/stars/nawafswe/qstorm" alt="Stars"></a>
+  <a href="https://github.com/nawafswe/qstorm/network/members"><img src="https://img.shields.io/github/forks/nawafswe/qstorm" alt="Forks"></a>
 </p>
 
 ---
