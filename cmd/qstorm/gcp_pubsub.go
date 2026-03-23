@@ -37,9 +37,10 @@ func runPubSubStorm(ctx context.Context, cfg config.Config, ptr printer.Printer)
 	pubsubStormEngine := engine.NewEngine(template.NewTemplate(), pubsubClient, metricCollector, ptr)
 	res, err := pubsubStormEngine.Run(ctx, cfg)
 	end := time.Since(start)
+	ptr.Summary(res, end)
 	if err != nil {
 		return fmt.Errorf("pubsub engine failed with error: %w", err)
 	}
-	ptr.Summary(res, end)
+
 	return nil
 }

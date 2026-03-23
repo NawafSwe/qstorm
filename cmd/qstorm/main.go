@@ -2,13 +2,17 @@ package main
 
 import (
 	"context"
+	"os/signal"
+	"syscall"
 
 	"github.com/nawafswe/qstorm/internal/config"
 	"github.com/nawafswe/qstorm/internal/printer"
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	ptr := printer.NewPrinter()
 
 	ptr.Banner()
@@ -29,8 +33,8 @@ func main() {
 		ptr.Fatal("queue type not supported", nil)
 	}
 	err = queueFunc(ctx, cfg, ptr)
-	if err != nil {
+	// if not ctx err.
+	if err != nil && ctx.Err() == nil {
 		ptr.Fatal("failed to run queue", err)
 	}
-
 }
