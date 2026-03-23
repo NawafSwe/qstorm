@@ -48,7 +48,7 @@ clean: ## Remove built binaries
 
 lint: ## Run golangci-lint
 	docker run -t --rm -v ${PWD}:/app -v $$(go env GOMODCACHE):/go/pkg/mod \
-		-w /app golangci/golangci-lint:v2.7.0 golangci-lint run -v
+		-w /app golangci/golangci-lint:v2.11.4 golangci-lint run -v
 
 test: ## Run unit tests with coverage
 	@echo "Running unit tests..."
@@ -58,7 +58,8 @@ test: ## Run unit tests with coverage
 
 test-integration: ## Run integration tests (requires emulator)
 	@echo "Running integration tests..."
-	go test -tags integration -race -v ./... -timeout 60s
+	PUBSUB_EMULATOR_HOST=localhost:8095 go test -tags integration -race -v \
+		-coverprofile coverage-integration.out -coverpkg=./... ./... -timeout 60s
 
 fmt: ## Format code
 	gci write -s standard -s default . --skip-generated --skip-vendor && \
