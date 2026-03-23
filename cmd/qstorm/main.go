@@ -42,11 +42,15 @@ func main() {
 	cfg.Connection = connEnv
 	ptr.Config(cfg)
 
-	queueFunc, ok := queuesMap[cfg.Queue.Type]
+	storm, ok := queuesMap[cfg.Queue.Type]
 	if !ok {
 		ptr.Fatal("unsupported queue type", fmt.Errorf("%q — available: %s", cfg.Queue.Type, availableQueues()))
 	}
-	err = queueFunc(ctx, cfg, ptr)
+	err = storm(queueArgs{
+		ctx:     ctx,
+		cfg:     cfg,
+		printer: ptr,
+	}).Run(ctx)
 	if err != nil && ctx.Err() == nil {
 		ptr.Fatal("failed to run queue", err)
 	}
