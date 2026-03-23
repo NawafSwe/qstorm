@@ -48,7 +48,7 @@ QStorm is a **client-side tool**. It runs from your machine or CI pipeline and p
 |                                                | Queue | Status |
 |:----------------------------------------------:|---|:---:|
 |   <img src="img/pubsub-gcp.svg" width="16">    | Google Cloud PubSub | ✅ |
-|  <img src="img/kafka-apache.png" width="16">   | Apache Kafka | Planned |
+|  <img src="img/kafka-apache.svg" width="16">   | Apache Kafka | Planned |
 |    <img src="img/RabbitMQ.svg" width="16">     | RabbitMQ | Planned |
 |  <img src="img/pulsar-apache.svg" width="16">  | Apache Pulsar | Planned |
 | <img src="img/activeMQ-apache.svg" width="16"> | Apache ActiveMQ | Planned |
@@ -91,6 +91,8 @@ PUBSUB__PROJECT_ID=qstorm-project
 
 ### 3. Create a test config
 
+See [Configuration Reference](#configuration-reference) for full details.
+
 ```json
 {
   "QUEUE": {
@@ -115,12 +117,18 @@ PUBSUB__PROJECT_ID=qstorm-project
 
 # with flags
 ./bin/qstorm --config config.json --env .env
+
+# with environment variables (no .env file needed)
+PUBSUB__PROJECT_ID=my-project PUBSUB__EMULATOR_HOST=localhost:8095 \
+  ./bin/qstorm --config config.json --env ""
 ```
 
 | Flag | Default | Description |
 |---|---|---|
 | `--config` | _(required)_ | Path to the JSON test config file |
-| `--env` | `.env` | Path to the `.env` connection file |
+| `--env` | `.env` | Path to the `.env` connection file. Pass `""` to use OS environment variables only |
+
+Connection credentials can come from a `.env` file, OS environment variables, or both. OS environment variables take precedence over the file.
 
 ### Example output
 
@@ -155,6 +163,54 @@ PUBSUB__PROJECT_ID=qstorm-project
 
   ──────────────────────────────────────────────────────────────────────
 ```
+
+## Configuration Reference
+
+QStorm uses two separate sources for configuration:
+- A **JSON config file** defines the test (what to publish, how fast, for how long)
+- **Environment variables** (or a `.env` file) provide connection credentials
+
+### Test config (JSON)
+
+```json
+{
+  "QUEUE": { ... },
+  "STAGES": [ ... ]
+}
+```
+
+#### QUEUE
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `TOPIC` | string | yes | The topic/queue name to publish to |
+| `TYPE` | string | yes | Queue technology. Currently: `gcp-pubsub` |
+| `PAYLOAD` | string | yes | Message body. Supports template variables |
+| `ATTRIBUTES` | string | no | JSON string of key-value pairs attached to each message |
+| `ORDERING_KEY` | string | no | Message ordering key (PubSub enables ordering automatically when set) |
+
+#### STAGES
+
+Each stage runs sequentially. Define as many as needed.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `DURATION` | string | yes | How long the stage runs (e.g. `"30s"`, `"2m"`) |
+| `RATE` | int | yes | Messages per second during this stage |
+
+### Connection config (environment)
+
+Connection credentials are loaded from environment variables. You can provide them via a `.env` file, OS environment variables, or both (OS env takes precedence).
+
+#### Google Cloud PubSub
+
+| Variable | Required | Description |
+|---|---|---|
+| `PUBSUB__PROJECT_ID` | yes | GCP project ID |
+| `PUBSUB__EMULATOR_HOST` | no | Emulator address (e.g. `localhost:8095`). When set, connects to emulator instead of GCP |
+| `PUBSUB__CREDENTIALS_FILE` | no | Service account JSON credentials |
+
+> Note: use `__` (double underscore) as the delimiter for nested keys.
 
 ## Concepts
 

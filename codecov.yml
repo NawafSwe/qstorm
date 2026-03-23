@@ -1,4 +1,7 @@
 codecov:
   ignore:
     - cmd/**
+    - internal/printer/**
+    - example/**
     - "**/mock/**"
+    - Dockerfile
