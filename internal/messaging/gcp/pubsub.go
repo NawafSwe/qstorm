@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/pubsub/v2"
-	googleproto "cloud.google.com/go/pubsub/v2/apiv1/pubsubpb"
 	"github.com/nawafswe/qstorm/internal/messaging"
 	"google.golang.org/api/option"
 )
@@ -46,20 +45,6 @@ func NewClient(ctx context.Context, projectID string, opts ...Option) (Client, e
 	}
 	c.client = pubsubClient
 	return c, nil
-}
-
-// Connect verifies that the given topic exists.
-func (c Client) Connect(ctx context.Context, topic string) error {
-	tt, err := c.client.TopicAdminClient.GetTopic(ctx, &googleproto.GetTopicRequest{
-		Topic: topic,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to get topic: %w", err)
-	}
-	if tt.GetName() == "" {
-		return fmt.Errorf("topic %s does not exist", topic)
-	}
-	return nil
 }
 
 // Publish sends a message to the given PubSub topic and waits for confirmation.

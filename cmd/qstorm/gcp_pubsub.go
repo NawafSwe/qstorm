@@ -49,13 +49,6 @@ func (p pubSubStorm) storm(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("pubsub connection failed: %w", err)
 	}
-	// we check connection status if the emulator host is not set, as emulators doesn't support connection status for pubsub v2.
-	if p.cfg.Connection.PubSub.EmulatorHost == "" {
-		err = pubsubClient.Connect(context.Background(), "qstorm-topic")
-		if err != nil {
-			return fmt.Errorf("failed to connect to pubsub topic: %w", err)
-		}
-	}
 	metricCollector := metric.NewCollector()
 	start := time.Now()
 	pubsubStormEngine := engine.NewEngine(template.NewTemplate(), pubsubClient, metricCollector, p.printer)

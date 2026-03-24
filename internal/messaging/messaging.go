@@ -1,8 +1,6 @@
 // Package messaging defines interfaces and types for queue message publishing.
 package messaging
 
-import "context"
-
 // Message is a message to be published by a Publisher.
 type Message struct {
 	ID          string
@@ -22,14 +20,8 @@ type Closer interface {
 	Close() error
 }
 
-// Connector is an interface for connecting to a topic.
-type Connector interface {
-	Connect(ctx context.Context, topic string) error
-}
-
 // Messenger is an interface for publishing messages to a topic.
 type Messenger interface {
 	Publisher
-	Connector
 	Closer
 }
