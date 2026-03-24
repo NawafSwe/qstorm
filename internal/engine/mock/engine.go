@@ -97,20 +97,6 @@ func (mr *MockmessengerMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*Mockmessenger)(nil).Close))
 }
 
-// Connect mocks base method.
-func (m *Mockmessenger) Connect(ctx context.Context, topic string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Connect", ctx, topic)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Connect indicates an expected call of Connect.
-func (mr *MockmessengerMockRecorder) Connect(ctx, topic any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Connect", reflect.TypeOf((*Mockmessenger)(nil).Connect), ctx, topic)
-}
-
 // Publish mocks base method.
 func (m *Mockmessenger) Publish(ctx context.Context, topic string, message messaging.Message) error {
 	m.ctrl.T.Helper()

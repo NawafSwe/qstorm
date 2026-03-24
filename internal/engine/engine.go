@@ -54,7 +54,6 @@ type (
 	messenger interface {
 		Publish(ctx context.Context, topic string, message messaging.Message) error
 		Close() error
-		Connect(ctx context.Context, topic string) error
 	}
 	metricAggregator interface {
 		Record(executionTime time.Duration, encounteredErr error)
