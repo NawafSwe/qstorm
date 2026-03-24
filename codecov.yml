@@ -3,5 +3,7 @@ codecov:
     - cmd/**
     - internal/printer/**
     - example/**
-    - "**/mock/**"
+    - /mock/**
+    - .github/**
+    - internal/config/**
     - Dockerfile
