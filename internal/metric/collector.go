@@ -24,8 +24,9 @@ const (
 type (
 	// Summary encapsulates the summary of metric collection.
 	Summary struct {
-		ErrorCount   int64
-		SuccessCount int64
+		ErrorCount     int64
+		ErrorsOverview map[string]int
+		SuccessCount   int64
 
 		SuccessRate float64
 		FailureRate float64
@@ -54,17 +55,19 @@ type (
 
 // Collector records publish latencies and counts using an HDR Histogram.
 type Collector struct {
-	mu           sync.Mutex
-	errorCount   atomic.Int64
-	successCount atomic.Int64
-	histogram    *hd.Histogram
+	mu                   sync.Mutex
+	errorCount           atomic.Int64
+	errorMessageCountMap map[string]int
+	successCount         atomic.Int64
+	histogram            *hd.Histogram
 }
 
 // NewCollector creates a new Collector.
 func NewCollector() *Collector {
 	return &Collector{
-		mu:        sync.Mutex{},
-		histogram: hd.New(minLatencyMicros, maxLatencyMicros, histogramSigFigs),
+		mu:                   sync.Mutex{},
+		errorMessageCountMap: make(map[string]int),
+		histogram:            hd.New(minLatencyMicros, maxLatencyMicros, histogramSigFigs),
 	}
 }
 
@@ -88,6 +91,7 @@ func (c *Collector) Summary() Summary {
 		SuccessCount:   successes,
 		SuccessRate:    successRate,
 		FailureRate:    failureRate,
+		ErrorsOverview: c.errorMessageCountMap,
 		AverageLatency: c.histogram.Mean() / microsPerMS,
 		P99Latency:     float64(c.histogram.ValueAtPercentile(p99PercentileValue)) / microsPerMS,
 		P90Latency:     float64(c.histogram.ValueAtPercentile(p90PercentileValue)) / microsPerMS,
@@ -98,18 +102,19 @@ func (c *Collector) Summary() Summary {
 
 // Record registers a publish result — either a latency on success or an error count.
 func (c *Collector) Record(executionTime time.Duration, encounteredErr error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if encounteredErr != nil {
 		c.errorCount.Add(1)
+		c.errorMessageCountMap[encounteredErr.Error()]++
 		return
 	}
 
 	c.successCount.Add(1)
-	c.mu.Lock()
 
 	// ignoring the error as there is no need to block the execution process.
 	_ = c.histogram.RecordValue(executionTime.Microseconds())
 
-	c.mu.Unlock()
 }
 
 // Snapshot returns a snapshot of the metric collection.
