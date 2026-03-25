@@ -15,13 +15,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/nawafswe/qstorm/actions/workflows/test.yaml"><img src="https://github.com/nawafswe/qstorm/actions/workflows/test.yaml/badge.svg" alt="Tests"></a>
+  <a href="https://github.com/nawafswe/qstorm/actions/workflows/test.yaml"><img src="https://github.com/nawafswe/qstorm/actions/workflows/test.yaml/badge.svg" alt="Build Status"></a>
   <a href="https://codecov.io/gh/nawafswe/qstorm"><img src="https://codecov.io/gh/nawafswe/qstorm/branch/main/graph/badge.svg" alt="Coverage"></a>
-  <a href="https://goreportcard.com/badge/github.com/nawafswe/qstorm"><img src="https://goreportcard.com/badge/github.com/nawafswe/qstorm" alt="Go Report"></a>
+  <a href="https://goreportcard.com/report/github.com/nawafswe/qstorm"><img src="https://goreportcard.com/badge/github.com/nawafswe/qstorm" alt="Go Report Card"></a>
+  <a href="https://golang.org"><img src="https://img.shields.io/badge/go-1.26-blue.svg" alt="Go Version"></a>
   <a href="https://github.com/nawafswe/qstorm/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
   <a href="https://github.com/nawafswe/qstorm/releases"><img src="https://img.shields.io/github/v/release/nawafswe/qstorm" alt="Release"></a>
-  <a href="https://github.com/nawafswe/qstorm/stargazers"><img src="https://img.shields.io/github/stars/nawafswe/qstorm" alt="Stars"></a>
-  <a href="https://github.com/nawafswe/qstorm/network/members"><img src="https://img.shields.io/github/forks/nawafswe/qstorm" alt="Forks"></a>
+  <a href="https://github.com/nawafswe/qstorm/stargazers"><img src="https://img.shields.io/github/stars/nawafswe/qstorm?style=social" alt="GitHub Stars"></a>
+  <a href="https://github.com/nawafswe/qstorm/network/members"><img src="https://img.shields.io/github/forks/nawafswe/qstorm?style=social" alt="GitHub Forks"></a>
 </p>
 
 ---
@@ -40,15 +41,15 @@ QStorm is a **client-side tool**. It runs from your machine or CI pipeline and p
 - **Template variables**: `{{uuid}}` and `{{timestamp}}` generate unique values per message
 - **Live progress**: real-time terminal output during test execution
 - **Accurate metrics**: HDR Histogram for latency percentiles (p50, p75, p90, p99)
+- **Error summary**: distinct errors aggregated by type with counts
 - **Graceful shutdown**: `Ctrl+C` stops the test and prints collected results
-- **Growing queue support**: PubSub today, Kafka and RabbitMQ coming next
 
 ## Queue Support
 
 |                                                | Queue | Status |
 |:----------------------------------------------:|---|:---:|
-|   <img src="img/pubsub-gcp.svg" width="16">    | Google Cloud PubSub | ✅ |
-|  <img src="img/kafka-apache.svg" width="16">   | Apache Kafka | Planned |
+|   <img src="img/pubsub-gcp.svg" width="16">    | Google Cloud PubSub | Supported |
+|  <img src="img/kafka-apache.svg" width="16">   | Apache Kafka | Supported |
 |    <img src="img/RabbitMQ.svg" width="16">     | RabbitMQ | Planned |
 |  <img src="img/pulsar-apache.svg" width="16">  | Apache Pulsar | Planned |
 | <img src="img/activeMQ-apache.svg" width="16"> | Apache ActiveMQ | Planned |
@@ -70,44 +71,30 @@ make build
 
 ## Usage
 
-### 1. Start a queue emulator (for local testing)
+### 1. Start a queue locally
 
 ```bash
-make environment
-```
+# PubSub emulator
+docker compose up -d pubsub
 
-This starts the Google Cloud PubSub emulator via Docker and creates a test topic.
+# Kafka (plaintext)
+docker compose up -d kafka
+
+# Kafka (SASL auth)
+docker compose up -d kafka-sasl
+```
 
 ### 2. Configure connection credentials
 
 ```bash
-make env  # copies .env.sample → .env
+make env  # copies .env.sample -> .env
 ```
 
-```env
-PUBSUB__EMULATOR_HOST=localhost:8095
-PUBSUB__PROJECT_ID=qstorm-project
-```
+Edit `.env` to match your queue. See [Queue Configuration](#queue-configuration) for all options.
 
 ### 3. Create a test config
 
-See [Configuration Reference](#configuration-reference) for full details.
-
-```json
-{
-  "QUEUE": {
-    "TOPIC": "qstorm-topic",
-    "TYPE": "gcp-pubsub",
-    "PAYLOAD": "{\"order_id\": \"{{uuid}}\", \"customer_id\": \"{{uuid}}\", \"amount\": 10}",
-    "ATTRIBUTES": "{\"EVENT_TIMESTAMP\": \"{{timestamp}}\", \"SOURCE\": \"qstorm\"}"
-  },
-  "STAGES": [
-    { "DURATION": "30s", "RATE": 50 },
-    { "DURATION": "60s", "RATE": 200 },
-    { "DURATION": "60s", "RATE": 50 }
-  ]
-}
-```
+See [Queue Configuration](#queue-configuration) for full details per queue type.
 
 ### 4. Run
 
@@ -134,54 +121,59 @@ See [Configuration Reference](#configuration-reference) for full details.
      \__\_\____/ \__\___/|_|  |_| |_| |_|
 
   execution: local
-  queue:     gcp-pubsub
+  queue:     apache-kafka
   topic:     qstorm-topic
-  stages:    3 configured, ~2m30s total
-  expected:  ~15000 messages
+  stages:    2 configured, ~40s total
+  expected:  ~600 messages
 
-    → stage 1: 30s @ 50 msg/s
-    → stage 2: 1m0s @ 200 msg/s
-    → stage 3: 1m0s @ 50 msg/s
+    -> stage 1: 30s @ 10 msg/s
+    -> stage 2: 10s @ 30 msg/s
 
-  ──────────────────────────────────────────────────────────────────────
+  ------------------------------------------------------------------
 
-     ✓ published......: 14988
-     ✗ failed.........: 12
+     v published......: 598
+     x failed.........: 2
 
-       success_rate...: 99.92%
-       error_rate.....: 0.08%
+         connection refused.......: 2
+
+       success_rate...: 99.67%
+       error_rate.....: 0.33%
 
        publish_latency: avg=2.1ms  p50=1.9ms  p75=2.4ms  p90=3.2ms  p99=8.1ms
 
-       duration.......: 2m30.012s
+       duration.......: 40.012s
 
-  ──────────────────────────────────────────────────────────────────────
+  ------------------------------------------------------------------
 ```
 
 ## Configuration Reference
 
-QStorm uses two separate sources for configuration:
+QStorm uses two separate sources:
 - A **JSON config file** defines the test (what to publish, how fast, for how long)
 - A **`.env` file** provides connection credentials
 
-### Test config (JSON)
+### Shared Config
+
+Every queue type uses the same top-level structure:
 
 ```json
 {
-  "QUEUE": { ... },
-  "STAGES": [ ... ]
+  "QUEUE": {
+    "TYPE": "gcp-pubsub | apache-kafka",
+    "PAYLOAD": "...",
+    "ATTRIBUTES": "...",
+    "PUBSUB": { },
+    "KAFKA": { }
+  },
+  "STAGES": [ ]
 }
 ```
 
-#### QUEUE
-
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `TOPIC` | string | yes | The topic/queue name to publish to |
-| `TYPE` | string | yes | Queue technology. Currently: `gcp-pubsub` |
-| `PAYLOAD` | string | yes | Message body. Supports template variables |
-| `ATTRIBUTES` | string | no | JSON string of key-value pairs attached to each message |
-| `ORDERING_KEY` | string | no | Message ordering key (PubSub enables ordering automatically when set) |
+| `TYPE` | string | yes | Queue type: `gcp-pubsub`, `apache-kafka` |
+| `PAYLOAD` | string | yes | Message body. Supports [template variables](#template-variables) |
+| `ATTRIBUTES` | string | no | JSON key-value pairs attached to each message. Supports [template variables](#template-variables). Maps to PubSub attributes, Kafka headers, etc. |
 
 #### STAGES
 
@@ -192,17 +184,122 @@ Each stage runs sequentially. Define as many as needed.
 | `DURATION` | string | yes | How long the stage runs (e.g. `"30s"`, `"2m"`) |
 | `RATE` | int | yes | Messages per second during this stage |
 
-### Connection config (`.env` file)
+---
 
-Connection credentials are loaded from a `.env` file passed via `--env`. Use `__` (double underscore) as the delimiter for nested keys.
+## Queue Configuration
 
-#### Google Cloud PubSub
+### Google Cloud PubSub
+
+#### Test config (JSON)
+
+```json
+{
+  "QUEUE": {
+    "TYPE": "gcp-pubsub",
+    "PAYLOAD": "{\"order_id\": \"{{uuid}}\"}",
+    "ATTRIBUTES": "{\"SOURCE\": \"qstorm\"}",
+    "PUBSUB": {
+      "TOPIC": "qstorm-topic",
+      "ORDERING_KEY": "customer-123"
+    }
+  },
+  "STAGES": [
+    { "DURATION": "30s", "RATE": 50 }
+  ]
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `TOPIC` | string | yes | Full topic name (e.g. `projects/my-project/topics/my-topic` for real GCP, or just `my-topic` for emulator) |
+| `ORDERING_KEY` | string | no | Enables ordered delivery. Messages with the same key are delivered in order |
+
+#### Connection config (`.env`)
 
 | Variable | Required | Description |
 |---|---|---|
 | `PUBSUB__PROJECT_ID` | yes | GCP project ID |
 | `PUBSUB__EMULATOR_HOST` | no | Emulator address (e.g. `localhost:8095`). When set, connects to emulator instead of GCP |
 | `PUBSUB__CREDENTIALS_FILE` | no | Service account JSON credentials |
+
+> See [Google Cloud PubSub documentation](https://cloud.google.com/pubsub/docs) for more details.
+
+---
+
+### Apache Kafka
+
+#### Test config (JSON)
+
+```json
+{
+  "QUEUE": {
+    "TYPE": "apache-kafka",
+    "PAYLOAD": "{\"order_id\": \"{{uuid}}\"}",
+    "ATTRIBUTES": "{\"SOURCE\": \"qstorm\"}",
+    "KAFKA": {
+      "TOPIC": "qstorm-topic",
+      "KEY": "order-service",
+      "PARTITION": -1,
+      "PRODUCER": {
+        "ACKS": -1,
+        "COMPRESSION_TYPE": "snappy",
+        "LINGER_MS": 10,
+        "BATCH_SIZE": 32768
+      }
+    }
+  },
+  "STAGES": [
+    { "DURATION": "30s", "RATE": 50 }
+  ]
+}
+```
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `TOPIC` | string | yes | - | Kafka topic name |
+| `KEY` | string | no | empty (round-robin) | Message key. Used for partition assignment. Messages with the same key go to the same partition. When empty, Kafka distributes messages via round-robin |
+| `PARTITION` | int | no | -1 (any) | Explicit partition number. `0` or unset defaults to automatic assignment via key hash |
+
+#### Producer tuning (`KAFKA.PRODUCER`)
+
+All optional. Sensible defaults are used when omitted.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `ACKS` | int (nullable) | -1 (all) | Broker acknowledgments. `0` = fire-and-forget, `1` = leader only, `-1` = all in-sync replicas |
+| `COMPRESSION_TYPE` | string | none | Compression: `none`, `gzip`, `snappy`, `lz4`, `zstd` |
+| `LINGER_MS` | int | 0 | Batching delay in ms. Higher = more batching = higher throughput |
+| `BATCH_SIZE` | int | librdkafka default | Max bytes per batch |
+
+> See [librdkafka configuration reference](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md) for all available producer options.
+
+#### Connection config (`.env`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `KAFKA__BOOTSTRAP_SERVERS` | yes | Comma-separated broker addresses (e.g. `localhost:9092`) |
+| `KAFKA__SECURITY_PROTOCOL` | no | `PLAINTEXT` (default), `SASL_PLAINTEXT`, `SASL_SSL`, `SSL` |
+| `KAFKA__SASL_MECHANISM` | no | `PLAIN`, `SCRAM-SHA-256`, `SCRAM-SHA-512` |
+| `KAFKA__SASL_USERNAME` | no | SASL username |
+| `KAFKA__SASL_PASSWORD` | no | SASL password (redacted in logs) |
+
+**Local (no auth):**
+```env
+KAFKA__BOOTSTRAP_SERVERS=localhost:9092
+```
+
+**Cloud (Confluent Cloud, AWS MSK, Aiven, etc.):**
+```env
+KAFKA__BOOTSTRAP_SERVERS=broker.cloud:9093
+KAFKA__SECURITY_PROTOCOL=SASL_SSL
+KAFKA__SASL_MECHANISM=PLAIN
+KAFKA__SASL_USERNAME=api-key
+KAFKA__SASL_PASSWORD=api-secret
+```
+
+> See [Apache Kafka documentation](https://kafka.apache.org/documentation/) for more details on security configuration.
+
+---
 
 ## Concepts
 
@@ -220,13 +317,15 @@ config:
             label: "Messages/sec"
 ---
 xychart-beta
-    title "Ramp → Sustain → Spike → Cooldown"
+    title "Ramp -> Sustain -> Spike -> Cooldown"
     x-axis ["0s", "30s", "60s", "90s", "120s", "150s", "180s"]
     y-axis 0 --> 1000
     line [0, 100, 500, 500, 1000, 200, 200]
 ```
 
 ### Template variables
+
+Template variables are supported in `PAYLOAD` and `ATTRIBUTES` only. They are **not** processed in queue-specific configuration fields (topic, key, partition, etc.) to avoid unexpected behavior.
 
 | Variable | Description | Example |
 |---|---|---|
@@ -240,14 +339,16 @@ Each `{{uuid}}` in a single message resolves to a **different** value.
 QStorm collects metrics using [HDR Histogram](https://github.com/HdrHistogram/hdrhistogram-go) for accurate latency percentiles:
 
 - **published / failed**: total message counts
+- **errors overview**: distinct error messages with occurrence counts
 - **success_rate / error_rate**: as percentages
 - **publish_latency**: avg, p50, p75, p90, p99
 - **duration**: total test time
 
 ## Roadmap
 
-- [ ] Apache Kafka support
 - [ ] RabbitMQ support
+- [ ] Apache Pulsar support
+- [ ] Apache ActiveMQ support
 - [ ] Threshold assertions (fail if p99 > Xms or error rate > Y%)
 - [ ] Result export (JSON, CSV) for CI/CD integration
 - [ ] Custom template functions (`{{rand_int 1 100}}`, `{{rand_string 10}}`)
