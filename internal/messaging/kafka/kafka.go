@@ -42,7 +42,7 @@ func NewClient(_ context.Context, kafkaConnConfig config.KafkaConnectionConfig, 
 }
 
 // Publish sends a message to the given kafka topic.
-func (c Client) Publish(_ context.Context, queueConfig config.QueueConfig) error {
+func (c Client) Publish(ctx context.Context, queueConfig config.QueueConfig) error {
 	kafkaConfig := queueConfig.Kafka
 	msgID := uuid.New().String()
 	headers, err := messageHeaders(queueConfig.Attributes)
@@ -75,15 +75,19 @@ func (c Client) Publish(_ context.Context, queueConfig config.QueueConfig) error
 	if err != nil {
 		return fmt.Errorf("failed to produce message to topic %s: %w", kafkaConfig.Topic, err)
 	}
-	deliveredEvent := <-deliveryChan
-	m, ok := deliveredEvent.(*conkafka.Message)
-	if !ok {
-		return fmt.Errorf("unexpected delivery event type for topic %s", kafkaConfig.Topic)
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case deliveredEvent := <-deliveryChan:
+		m, ok := deliveredEvent.(*conkafka.Message)
+		if !ok {
+			return fmt.Errorf("unexpected delivery event type for topic %s", kafkaConfig.Topic)
+		}
+		if m.TopicPartition.Error != nil {
+			return fmt.Errorf("failed delivering message to topic %s: %w", kafkaConfig.Topic, m.TopicPartition.Error)
+		}
+		return nil
 	}
-	if m.TopicPartition.Error != nil {
-		return fmt.Errorf("failed delivering message to topic %s: %w", kafkaConfig.Topic, m.TopicPartition.Error)
-	}
-	return nil
 }
 
 // Close closes the kafka client.
