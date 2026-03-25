@@ -57,7 +57,7 @@ type PubSubConnectionConfig struct {
 	EmulatorHost    string      `mapstructure:"EMULATOR_HOST" json:",omitempty"`
 }
 
-// PubSubConfig holds Google Cloud PubSub publisher configuration.
+// PubSubConfig holds Google Cloud PubSub configuration.
 type PubSubConfig struct {
 	Topic       string `mapstructure:"TOPIC"`
 	OrderingKey string `mapstructure:"ORDERING_KEY"`
@@ -65,14 +65,27 @@ type PubSubConfig struct {
 
 // KafkaConnectionConfig holds Kafka connection details.
 type KafkaConnectionConfig struct {
-	BootstrapServers string `mapstructure:"BOOTSTRAP_SERVERS"`
+	BootstrapServers string      `mapstructure:"BOOTSTRAP_SERVERS"`
+	SecurityProtocol string      `mapstructure:"SECURITY_PROTOCOL"`
+	SASLMechanism    string      `mapstructure:"SASL_MECHANISM"`
+	SASLUsername     string      `mapstructure:"SASL_USERNAME"`
+	SASLPassword     NonLoggable `mapstructure:"SASL_PASSWORD"`
 }
 
-// KafkaConfig holds Kafka publisher configuration.
+// KafkaConfig holds Kafka configuration.
 type KafkaConfig struct {
-	Topic     string `mapstructure:"TOPIC"`
-	Key       string `mapstructure:"KEY"`
-	Partition int    `mapstructure:"PARTITION"`
+	Topic     string              `mapstructure:"TOPIC"`
+	Key       string              `mapstructure:"KEY"`
+	Partition int                 `mapstructure:"PARTITION"`
+	Producer  KafkaProducerConfig `mapstructure:"PRODUCER"`
+}
+
+// KafkaProducerConfig holds kafka producer configurations.
+type KafkaProducerConfig struct {
+	Acks            *int   `mapstructure:"ACKS"`
+	CompressionType string `mapstructure:"COMPRESSION_TYPE"`
+	LingerMs        int    `mapstructure:"LINGER_MS"`
+	BatchSize       int    `mapstructure:"BATCH_SIZE"`
 }
 
 // StageConfig configuration for a stage run.
