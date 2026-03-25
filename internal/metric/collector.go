@@ -114,7 +114,6 @@ func (c *Collector) Record(executionTime time.Duration, encounteredErr error) {
 
 	// ignoring the error as there is no need to block the execution process.
 	_ = c.histogram.RecordValue(executionTime.Microseconds())
-
 }
 
 // Snapshot returns a snapshot of the metric collection.

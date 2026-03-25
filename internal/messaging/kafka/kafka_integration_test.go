@@ -18,6 +18,8 @@ const (
 	testTopic       = "qstorm-integration-test"
 )
 
+func strPtr(s string) *string { return &s }
+
 func newPlaintextClient(t *testing.T) kafka.Client {
 	t.Helper()
 	client, err := kafka.NewClient(context.Background(),
@@ -105,7 +107,7 @@ func TestClient_Publish(t *testing.T) {
 		"sasl: publishes with key": {
 			getClient: newSASLClient,
 			queueConfig: config.QueueConfig{
-				Kafka:      config.KafkaConfig{Topic: testTopic, Key: "order-key"},
+				Kafka:      config.KafkaConfig{Topic: testTopic, Key: strPtr("order-key")},
 				Payload:    `{"order_id":"sasl-456"}`,
 				Attributes: `{"SOURCE":"qstorm-sasl-test","ENV":"integration"}`,
 			},
