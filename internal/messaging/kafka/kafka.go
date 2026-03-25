@@ -23,10 +23,6 @@ var configMaps = map[ConfigKey]string{
 
 type TopicPartition conkafka.TopicPartition
 
-const (
-	TopicPartitionAny = conkafka.PartitionAny
-)
-
 type Client struct {
 	producer *conkafka.Producer
 }
@@ -51,12 +47,18 @@ func (c Client) Publish(_ context.Context, queueConfig config.QueueConfig) error
 	if err != nil {
 		return fmt.Errorf("failed to create message headers: %w", err)
 	}
+	// if partition is 0, it means to use any partition.
+	partition := int32(kafkaConfig.Partition)
+	if partition == 0 {
+		partition = conkafka.PartitionAny
+	}
+
 	deliveryChan := make(chan conkafka.Event, 1)
 	// keeping the zero-values as is for visibility.
 	err = c.producer.Produce(&conkafka.Message{
 		TopicPartition: conkafka.TopicPartition{
 			Topic:     &kafkaConfig.Topic,
-			Partition: int32(kafkaConfig.Partition),
+			Partition: partition,
 			Offset:    0,
 			Metadata:  nil,
 			Error:     nil,
@@ -100,6 +102,10 @@ func applyConfig(configs map[ConfigKey]string) conkafka.ConfigMap {
 }
 
 func messageHeaders(attributes string) ([]conkafka.Header, error) {
+	if attributes == "" {
+		return nil, nil
+	}
+
 	var jsonAttrs map[string]string
 	if err := json.Unmarshal([]byte(attributes), &jsonAttrs); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal message attributes: %w", err)
