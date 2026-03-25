@@ -1,20 +1,16 @@
 // Package messaging defines interfaces and types for queue message publishing.
 package messaging
 
-import "context"
+import (
+	"context"
 
-// Message is a message to be published by a Publisher.
-type Message struct {
-	ID          string
-	Data        []byte
-	Attributes  string
-	OrderingKey string
-}
+	"github.com/nawafswe/qstorm/internal/config"
+)
 
 // Publisher is an interface for publishing messages to a topic.
 type Publisher interface {
 	// Publish publishes a message to a topic.
-	Publish(ctx context.Context, topic string, message Message) error
+	Publish(ctx context.Context, queueConfig config.QueueConfig) error
 }
 
 // Closer is an interface for closing resources.

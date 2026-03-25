@@ -8,7 +8,6 @@ import (
 
 	"github.com/nawafswe/qstorm/internal/config"
 	"github.com/nawafswe/qstorm/internal/engine/mock"
-	"github.com/nawafswe/qstorm/internal/messaging"
 	"github.com/nawafswe/qstorm/internal/metric"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -44,7 +43,6 @@ func TestEngine_Run(t *testing.T) {
 				},
 			},
 			opts: []Option{
-				WithUUIDGenerator(func() string { return "fixed-uuid" }),
 				WithTimeStampGenerator(func() time.Time { return fixedTime }),
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
@@ -55,7 +53,7 @@ func TestEngine_Run(t *testing.T) {
 					Payload: `{"id":"1"}`,
 				}, nil).AnyTimes()
 
-				m.EXPECT().Publish(gomock.Any(), "test-topic", gomock.Any()).Return(nil).AnyTimes()
+				m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 				ma.EXPECT().Record(gomock.Any(), nil).AnyTimes()
 				ma.EXPECT().Snapshot().Return(metric.Snapshot{SuccessCount: 1}).AnyTimes()
@@ -80,7 +78,6 @@ func TestEngine_Run(t *testing.T) {
 				},
 			},
 			opts: []Option{
-				WithUUIDGenerator(func() string { return "fixed-uuid" }),
 				WithTimeStampGenerator(func() time.Time { return fixedTime }),
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
@@ -91,7 +88,7 @@ func TestEngine_Run(t *testing.T) {
 					Payload: `{}`,
 				}, nil).AnyTimes()
 
-				m.EXPECT().Publish(gomock.Any(), "test-topic", gomock.Any()).Return(nil).AnyTimes()
+				m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 				ma.EXPECT().Record(gomock.Any(), nil).AnyTimes()
 				ma.EXPECT().Snapshot().Return(metric.Snapshot{}).AnyTimes()
@@ -113,7 +110,6 @@ func TestEngine_Run(t *testing.T) {
 				},
 			},
 			opts: []Option{
-				WithUUIDGenerator(func() string { return "fixed-uuid" }),
 				WithTimeStampGenerator(func() time.Time { return fixedTime }),
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
@@ -137,7 +133,6 @@ func TestEngine_Run(t *testing.T) {
 				},
 			},
 			opts: []Option{
-				WithUUIDGenerator(func() string { return "fixed-uuid" }),
 				WithTimeStampGenerator(func() time.Time { return fixedTime }),
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
@@ -147,7 +142,7 @@ func TestEngine_Run(t *testing.T) {
 				}, nil).AnyTimes()
 
 				pubErr := errors.New("connection refused")
-				m.EXPECT().Publish(gomock.Any(), "t", gomock.Any()).Return(pubErr).AnyTimes()
+				m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(pubErr).AnyTimes()
 
 				ma.EXPECT().Record(gomock.Any(), pubErr).AnyTimes()
 				ma.EXPECT().Snapshot().Return(metric.Snapshot{ErrorCount: 1}).AnyTimes()
@@ -166,7 +161,6 @@ func TestEngine_Run(t *testing.T) {
 				},
 			},
 			opts: []Option{
-				WithUUIDGenerator(func() string { return "fixed-uuid" }),
 				WithTimeStampGenerator(func() time.Time { return fixedTime }),
 			},
 			ctx: func() (context.Context, context.CancelFunc) {
@@ -178,7 +172,7 @@ func TestEngine_Run(t *testing.T) {
 					Payload: `{}`,
 				}, nil).AnyTimes()
 
-				m.EXPECT().Publish(gomock.Any(), "t", gomock.Any()).Return(nil).AnyTimes()
+				m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 				ma.EXPECT().Record(gomock.Any(), nil).AnyTimes()
 				ma.EXPECT().Snapshot().Return(metric.Snapshot{}).AnyTimes()
@@ -201,7 +195,7 @@ func TestEngine_Run(t *testing.T) {
 			want: metric.Summary{},
 		},
 
-		"default uuid and timestamp generators": {
+		"default timestamp generator": {
 			req: config.Config{
 				Queue: config.QueueConfig{
 					PubSub:  config.PubSubConfig{Topic: "t"},
@@ -211,14 +205,14 @@ func TestEngine_Run(t *testing.T) {
 					{Duration: 150 * time.Millisecond, Rate: 10},
 				},
 			},
-			// no opts — uses default uuid.NewString and time.Now
+			// no opts — uses default time.Now
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
 				tr.EXPECT().Render(gomock.Any()).Return(config.QueueConfig{
 					PubSub:  config.PubSubConfig{Topic: "t"},
 					Payload: `{}`,
 				}, nil).AnyTimes()
 
-				m.EXPECT().Publish(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+				m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 				ma.EXPECT().Record(gomock.Any(), gomock.Any()).AnyTimes()
 				ma.EXPECT().Snapshot().Return(metric.Snapshot{}).AnyTimes()
@@ -240,7 +234,6 @@ func TestEngine_Run(t *testing.T) {
 				},
 			},
 			opts: []Option{
-				WithUUIDGenerator(nil),
 				WithTimeStampGenerator(nil),
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
@@ -249,7 +242,7 @@ func TestEngine_Run(t *testing.T) {
 					Payload: `{}`,
 				}, nil).AnyTimes()
 
-				m.EXPECT().Publish(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+				m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 				ma.EXPECT().Record(gomock.Any(), gomock.Any()).AnyTimes()
 				ma.EXPECT().Snapshot().Return(metric.Snapshot{}).AnyTimes()
@@ -268,7 +261,6 @@ func TestEngine_Run(t *testing.T) {
 				},
 			},
 			opts: []Option{
-				WithUUIDGenerator(func() string { return "id" }),
 				WithTimeStampGenerator(func() time.Time { return fixedTime }),
 				WithProgressTicker(30 * time.Millisecond),
 			},
@@ -277,7 +269,7 @@ func TestEngine_Run(t *testing.T) {
 					PubSub: config.PubSubConfig{Topic: "t"}, Payload: `{}`,
 				}, nil).AnyTimes()
 
-				m.EXPECT().Publish(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+				m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 				ma.EXPECT().Record(gomock.Any(), gomock.Any()).AnyTimes()
 
 				ma.EXPECT().Snapshot().Return(metric.Snapshot{SuccessCount: 5, ErrorCount: 0}).MinTimes(1)
@@ -288,7 +280,7 @@ func TestEngine_Run(t *testing.T) {
 			want: metric.Summary{SuccessCount: 10, SuccessRate: 100},
 		},
 
-		"publishes correct message fields": {
+		"publishes correct queue config": {
 			req: config.Config{
 				Queue: config.QueueConfig{
 					PubSub:     config.PubSubConfig{Topic: "my-topic", OrderingKey: "order-123"},
@@ -300,22 +292,17 @@ func TestEngine_Run(t *testing.T) {
 				},
 			},
 			opts: []Option{
-				WithUUIDGenerator(func() string { return "test-uuid" }),
 				WithTimeStampGenerator(func() time.Time { return fixedTime }),
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
-				tr.EXPECT().Render(gomock.Any()).Return(config.QueueConfig{
+				expectedQueue := config.QueueConfig{
 					PubSub:     config.PubSubConfig{Topic: "my-topic", OrderingKey: "order-123"},
 					Payload:    `{"key":"val"}`,
 					Attributes: `{"attr":"1"}`,
-				}, nil).AnyTimes()
+				}
+				tr.EXPECT().Render(gomock.Any()).Return(expectedQueue, nil).AnyTimes()
 
-				m.EXPECT().Publish(gomock.Any(), "my-topic", messaging.Message{
-					ID:          "test-uuid",
-					Data:        []byte(`{"key":"val"}`),
-					Attributes:  `{"attr":"1"}`,
-					OrderingKey: "order-123",
-				}).Return(nil).AnyTimes()
+				m.EXPECT().Publish(gomock.Any(), expectedQueue).Return(nil).AnyTimes()
 
 				ma.EXPECT().Record(gomock.Any(), nil).AnyTimes()
 				ma.EXPECT().Snapshot().Return(metric.Snapshot{}).AnyTimes()

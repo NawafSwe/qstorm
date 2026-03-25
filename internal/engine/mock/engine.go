@@ -15,7 +15,6 @@ import (
 	time "time"
 
 	config "github.com/nawafswe/qstorm/internal/config"
-	messaging "github.com/nawafswe/qstorm/internal/messaging"
 	metric "github.com/nawafswe/qstorm/internal/metric"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -98,17 +97,17 @@ func (mr *MockmessengerMockRecorder) Close() *gomock.Call {
 }
 
 // Publish mocks base method.
-func (m *Mockmessenger) Publish(ctx context.Context, topic string, message messaging.Message) error {
+func (m *Mockmessenger) Publish(ctx context.Context, queueConfig config.QueueConfig) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Publish", ctx, topic, message)
+	ret := m.ctrl.Call(m, "Publish", ctx, queueConfig)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Publish indicates an expected call of Publish.
-func (mr *MockmessengerMockRecorder) Publish(ctx, topic, message any) *gomock.Call {
+func (mr *MockmessengerMockRecorder) Publish(ctx, queueConfig any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*Mockmessenger)(nil).Publish), ctx, topic, message)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*Mockmessenger)(nil).Publish), ctx, queueConfig)
 }
 
 // MockmetricAggregator is a mock of metricAggregator interface.
