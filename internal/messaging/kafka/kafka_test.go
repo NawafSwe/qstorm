@@ -24,6 +24,7 @@ func Test_applyConfig(t *testing.T) {
 			want: kafka.ConfigMap{
 				"bootstrap.servers": "localhost:9092",
 				"acks":              -1,
+				"log_level":         0,
 			},
 		},
 		"full SASL_SSL connection": {
@@ -41,6 +42,7 @@ func Test_applyConfig(t *testing.T) {
 				"sasl.username":     "api-key",
 				"sasl.password":     "api-secret",
 				"acks":              -1,
+				"log_level":         0,
 			},
 		},
 		"producer tuning options": {
@@ -59,6 +61,7 @@ func Test_applyConfig(t *testing.T) {
 				"compression.type":  "snappy",
 				"linger.ms":         10,
 				"batch.size":        32768,
+				"log_level":         0,
 			},
 		},
 		"acks zero for fire-and-forget": {
@@ -71,6 +74,7 @@ func Test_applyConfig(t *testing.T) {
 			want: kafka.ConfigMap{
 				"bootstrap.servers": "localhost:9092",
 				"acks":              0,
+				"log_level":         0,
 			},
 		},
 		"nil acks keeps default": {
@@ -83,6 +87,7 @@ func Test_applyConfig(t *testing.T) {
 			want: kafka.ConfigMap{
 				"bootstrap.servers": "localhost:9092",
 				"acks":              -1,
+				"log_level":         0,
 			},
 		},
 		"zero producer values are omitted": {
@@ -97,6 +102,7 @@ func Test_applyConfig(t *testing.T) {
 			want: kafka.ConfigMap{
 				"bootstrap.servers": "localhost:9092",
 				"acks":              -1,
+				"log_level":         0,
 			},
 		},
 		"partial connection config": {
@@ -108,6 +114,7 @@ func Test_applyConfig(t *testing.T) {
 				"bootstrap.servers": "localhost:9092",
 				"security.protocol": "SASL_SSL",
 				"acks":              -1,
+				"log_level":         0,
 			},
 		},
 	}

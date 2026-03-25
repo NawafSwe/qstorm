@@ -23,6 +23,7 @@ const (
 	compressionType  = "compression.type"
 	lingerMs         = "linger.ms"
 	batchSize        = "batch.size"
+	logLevel         = "log_level"
 )
 
 type Client struct {
@@ -100,6 +101,7 @@ func applyConfig(conn config.KafkaConnectionConfig, producer config.KafkaProduce
 	cfg := conkafka.ConfigMap{
 		bootstrapServers: conn.BootstrapServers,
 		acks:             -1, // default librdkafka
+		logLevel:         0,  // suppress librdkafka logs to stderr
 	}
 
 	// connection/auth
