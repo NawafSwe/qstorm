@@ -33,7 +33,9 @@ func TestEngine_Run(t *testing.T) {
 		"single stage publishes messages": {
 			req: config.Config{
 				Queue: config.QueueConfig{
-					Topic:   "test-topic",
+					PubSub: config.PubSubConfig{
+						Topic: "test-topic",
+					},
 					Type:    config.GCPPubSub,
 					Payload: `{"id":"1"}`,
 				},
@@ -47,7 +49,9 @@ func TestEngine_Run(t *testing.T) {
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
 				tr.EXPECT().Render(gomock.Any()).Return(config.QueueConfig{
-					Topic:   "test-topic",
+					PubSub: config.PubSubConfig{
+						Topic: "test-topic",
+					},
 					Payload: `{"id":"1"}`,
 				}, nil).AnyTimes()
 
@@ -65,7 +69,9 @@ func TestEngine_Run(t *testing.T) {
 		"multiple stages run sequentially": {
 			req: config.Config{
 				Queue: config.QueueConfig{
-					Topic:   "test-topic",
+					PubSub: config.PubSubConfig{
+						Topic: "test-topic",
+					},
 					Payload: `{}`,
 				},
 				Stages: []config.StageConfig{
@@ -79,7 +85,9 @@ func TestEngine_Run(t *testing.T) {
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
 				tr.EXPECT().Render(gomock.Any()).Return(config.QueueConfig{
-					Topic:   "test-topic",
+					PubSub: config.PubSubConfig{
+						Topic: "test-topic",
+					},
 					Payload: `{}`,
 				}, nil).AnyTimes()
 
@@ -96,7 +104,10 @@ func TestEngine_Run(t *testing.T) {
 
 		"template render error records metric": {
 			req: config.Config{
-				Queue: config.QueueConfig{Topic: "t", Payload: `bad`},
+				Queue: config.QueueConfig{
+					PubSub:  config.PubSubConfig{Topic: "t"},
+					Payload: `bad`,
+				},
 				Stages: []config.StageConfig{
 					{Duration: 200 * time.Millisecond, Rate: 10},
 				},
@@ -120,7 +131,7 @@ func TestEngine_Run(t *testing.T) {
 
 		"publish error records metric": {
 			req: config.Config{
-				Queue: config.QueueConfig{Topic: "t", Payload: `{}`},
+				Queue: config.QueueConfig{PubSub: config.PubSubConfig{Topic: "t"}, Payload: `{}`},
 				Stages: []config.StageConfig{
 					{Duration: 200 * time.Millisecond, Rate: 10},
 				},
@@ -131,7 +142,7 @@ func TestEngine_Run(t *testing.T) {
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
 				tr.EXPECT().Render(gomock.Any()).Return(config.QueueConfig{
-					Topic:   "t",
+					PubSub:  config.PubSubConfig{Topic: "t"},
 					Payload: `{}`,
 				}, nil).AnyTimes()
 
@@ -149,7 +160,7 @@ func TestEngine_Run(t *testing.T) {
 
 		"context cancellation stops execution": {
 			req: config.Config{
-				Queue: config.QueueConfig{Topic: "t", Payload: `{}`},
+				Queue: config.QueueConfig{PubSub: config.PubSubConfig{Topic: "t"}, Payload: `{}`},
 				Stages: []config.StageConfig{
 					{Duration: 5 * time.Second, Rate: 10},
 				},
@@ -163,7 +174,7 @@ func TestEngine_Run(t *testing.T) {
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
 				tr.EXPECT().Render(gomock.Any()).Return(config.QueueConfig{
-					Topic:   "t",
+					PubSub:  config.PubSubConfig{Topic: "t"},
 					Payload: `{}`,
 				}, nil).AnyTimes()
 
@@ -181,7 +192,7 @@ func TestEngine_Run(t *testing.T) {
 
 		"empty stages returns zero summary": {
 			req: config.Config{
-				Queue:  config.QueueConfig{Topic: "t"},
+				Queue:  config.QueueConfig{PubSub: config.PubSubConfig{Topic: "t"}},
 				Stages: []config.StageConfig{},
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
@@ -193,7 +204,7 @@ func TestEngine_Run(t *testing.T) {
 		"default uuid and timestamp generators": {
 			req: config.Config{
 				Queue: config.QueueConfig{
-					Topic:   "t",
+					PubSub:  config.PubSubConfig{Topic: "t"},
 					Payload: `{}`,
 				},
 				Stages: []config.StageConfig{
@@ -203,7 +214,7 @@ func TestEngine_Run(t *testing.T) {
 			// no opts — uses default uuid.NewString and time.Now
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
 				tr.EXPECT().Render(gomock.Any()).Return(config.QueueConfig{
-					Topic:   "t",
+					PubSub:  config.PubSubConfig{Topic: "t"},
 					Payload: `{}`,
 				}, nil).AnyTimes()
 
@@ -221,7 +232,7 @@ func TestEngine_Run(t *testing.T) {
 		"nil option generators keep defaults": {
 			req: config.Config{
 				Queue: config.QueueConfig{
-					Topic:   "t",
+					PubSub:  config.PubSubConfig{Topic: "t"},
 					Payload: `{}`,
 				},
 				Stages: []config.StageConfig{
@@ -234,7 +245,7 @@ func TestEngine_Run(t *testing.T) {
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
 				tr.EXPECT().Render(gomock.Any()).Return(config.QueueConfig{
-					Topic:   "t",
+					PubSub:  config.PubSubConfig{Topic: "t"},
 					Payload: `{}`,
 				}, nil).AnyTimes()
 
@@ -251,7 +262,7 @@ func TestEngine_Run(t *testing.T) {
 
 		"progress prints snapshot during stage": {
 			req: config.Config{
-				Queue: config.QueueConfig{Topic: "t", Payload: `{}`},
+				Queue: config.QueueConfig{PubSub: config.PubSubConfig{Topic: "t"}, Payload: `{}`},
 				Stages: []config.StageConfig{
 					{Duration: 150 * time.Millisecond, Rate: 100},
 				},
@@ -263,7 +274,7 @@ func TestEngine_Run(t *testing.T) {
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
 				tr.EXPECT().Render(gomock.Any()).Return(config.QueueConfig{
-					Topic: "t", Payload: `{}`,
+					PubSub: config.PubSubConfig{Topic: "t"}, Payload: `{}`,
 				}, nil).AnyTimes()
 
 				m.EXPECT().Publish(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
@@ -280,10 +291,9 @@ func TestEngine_Run(t *testing.T) {
 		"publishes correct message fields": {
 			req: config.Config{
 				Queue: config.QueueConfig{
-					Topic:       "my-topic",
-					Payload:     `{"key":"val"}`,
-					Attributes:  `{"attr":"1"}`,
-					OrderingKey: "order-123",
+					PubSub:     config.PubSubConfig{Topic: "my-topic", OrderingKey: "order-123"},
+					Payload:    `{"key":"val"}`,
+					Attributes: `{"attr":"1"}`,
 				},
 				Stages: []config.StageConfig{
 					{Duration: 150 * time.Millisecond, Rate: 10},
@@ -295,10 +305,9 @@ func TestEngine_Run(t *testing.T) {
 			},
 			expectFunc: func(tr *mock.MocktemplateRenderer, m *mock.Mockmessenger, ma *mock.MockmetricAggregator, p *mock.Mockprinter) {
 				tr.EXPECT().Render(gomock.Any()).Return(config.QueueConfig{
-					Topic:       "my-topic",
-					Payload:     `{"key":"val"}`,
-					Attributes:  `{"attr":"1"}`,
-					OrderingKey: "order-123",
+					PubSub:     config.PubSubConfig{Topic: "my-topic", OrderingKey: "order-123"},
+					Payload:    `{"key":"val"}`,
+					Attributes: `{"attr":"1"}`,
 				}, nil).AnyTimes()
 
 				m.EXPECT().Publish(gomock.Any(), "my-topic", messaging.Message{

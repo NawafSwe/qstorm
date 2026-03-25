@@ -12,6 +12,11 @@ import (
 	"github.com/nawafswe/qstorm/internal/metric"
 )
 
+var topicsMapping = map[config.QueueType]func(config.QueueConfig) string{
+	config.GCPPubSub:   func(c config.QueueConfig) string { return c.PubSub.Topic },
+	config.ApacheKafka: func(c config.QueueConfig) string { return c.Kafka.Topic },
+}
+
 const (
 	red    = "\033[31m"
 	green  = "\033[32m"
@@ -56,7 +61,7 @@ func (p Printer) Config(cfg config.Config) {
 
 	fmt.Printf("  %sexecution%s: local\n", bold, reset)
 	fmt.Printf("  %squeue%s:     %s\n", bold, reset, cfg.Queue.Type)
-	fmt.Printf("  %stopic%s:     %s\n", bold, reset, cfg.Queue.Topic)
+	fmt.Printf("  %stopic%s:     %s\n", bold, reset, topic(cfg.Queue))
 	fmt.Printf("  %sstages%s:    %d configured, ~%s total\n", bold, reset, len(cfg.Stages), totalDuration)
 	fmt.Printf("  %sexpected%s:  ~%d messages\n", bold, reset, totalMessages)
 	fmt.Println()
@@ -72,7 +77,7 @@ func (p Printer) Config(cfg config.Config) {
 
 // Progress prints a live progress line that overwrites itself.
 func (p Printer) Progress(elapsed time.Duration, currentStage, totalStages int, rate int, published, errors int64) {
-	bar := p.progressBar(elapsed, currentStage, totalStages)
+	bar := p.progressBar(elapsed)
 	fmt.Printf("\r  %s%s%s  stage %d/%d  %d msg/s  %s%d%s pub  %s%d%s err",
 		cyan, bar, reset,
 		currentStage, totalStages,
@@ -179,7 +184,15 @@ func (p Printer) fmtMs(ms float64) string {
 }
 
 // progressBar builds a visual progress indicator for the current stage.
-func (p Printer) progressBar(elapsed time.Duration, currentStage, totalStages int) string {
+func (p Printer) progressBar(elapsed time.Duration) string {
 	truncated := elapsed.Truncate(time.Second)
 	return fmt.Sprintf("running [%s]", truncated)
+}
+
+func topic(queueConfig config.QueueConfig) string {
+	f, found := topicsMapping[queueConfig.Type]
+	if !found {
+		return ""
+	}
+	return f(queueConfig)
 }

@@ -121,11 +121,11 @@ func (e Engine) runStage(ctx context.Context, queue config.QueueConfig, stage co
 		}
 
 		start := e.timeStampGen()
-		err = e.messenger.Publish(gCtx, templatedQueue.Topic, messaging.Message{
+		err = e.messenger.Publish(gCtx, templatedQueue.PubSub.Topic, messaging.Message{
 			ID:          e.uuidGen(),
 			Data:        []byte(templatedQueue.Payload),
 			Attributes:  templatedQueue.Attributes,
-			OrderingKey: templatedQueue.OrderingKey,
+			OrderingKey: templatedQueue.PubSub.OrderingKey,
 		})
 		end := time.Since(start)
 		e.metricAggregator.Record(end, err)

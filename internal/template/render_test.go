@@ -118,16 +118,14 @@ func TestTemplate_Render(t *testing.T) {
 				WithTimestampGenerator(func() time.Time { return fixedTime }),
 			},
 			queue: config.QueueConfig{
-				Topic:       "my-topic",
-				OrderingKey: "key-1",
-				Type:        config.GCPPubSub,
-				Payload:     `{{uuid}}`,
+				PubSub:  config.PubSubConfig{Topic: "my-topic", OrderingKey: "key-1"},
+				Type:    config.GCPPubSub,
+				Payload: `{{uuid}}`,
 			},
 			want: config.QueueConfig{
-				Topic:       "my-topic",
-				OrderingKey: "key-1",
-				Type:        config.GCPPubSub,
-				Payload:     "u",
+				PubSub:  config.PubSubConfig{Topic: "my-topic", OrderingKey: "key-1"},
+				Type:    config.GCPPubSub,
+				Payload: "u",
 			},
 		},
 		"default generators produce valid output": {
