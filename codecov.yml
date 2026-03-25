@@ -1,9 +1,9 @@
-codecov:
-  ignore:
-    - cmd/**
-    - internal/printer/**
-    - example/**
-    - /mock/**
-    - .github/**
-    - internal/config/**
-    - Dockerfile
+ignore:
+  - cmd/**
+  - internal/printer/**
+  - example/**
+  - "**/mock/**"
+  - .github/**
+  - internal/config/**
+  - Dockerfile
+  - docker-compose.yml
