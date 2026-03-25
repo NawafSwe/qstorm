@@ -1,0 +1,28 @@
+{
+  "QUEUE": {
+    "TYPE": "apache-kafka",
+    "PAYLOAD": "{\"order_id\": \"{{uuid}}\", \"customer_id\": \"{{uuid}}\", \"amount\": 10}",
+    "ATTRIBUTES": "{\"EVENT_TIMESTAMP\": \"{{timestamp}}\", \"SOURCE\": \"qstorm\", \"ENVIRONMENT\": \"local\", \"MESSAGE_ID\": \"{{uuid}}\"}",
+    "KAFKA": {
+      "TOPIC": "qstorm-topic",
+      "KEY": "",
+      "PARTITION": -1,
+      "PRODUCER": {
+        "BATCH_SIZE": 10000,
+        "LINGER_MS": 10,
+        "COMPRESSION_TYPE": "snappy",
+        "ACKS": -1
+      }
+    }
+  },
+  "STAGES": [
+    {
+      "DURATION": "30s",
+      "RATE": 10
+    },
+    {
+      "DURATION": "10s",
+      "RATE": 30
+    }
+  ]
+}
