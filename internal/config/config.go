@@ -20,7 +20,8 @@ func (nl NonLoggable) GetValue() string             { return string(nl) }
 type QueueType string
 
 const (
-	GCPPubSub QueueType = "gcp-pubsub"
+	GCPPubSub   QueueType = "gcp-pubsub"
+	ApacheKafka QueueType = "apache-kafka"
 )
 
 // Config is the configuration for the application.
@@ -32,11 +33,12 @@ type Config struct {
 
 // QueueConfig configuration for the queue run.
 type QueueConfig struct {
-	Topic       string    `mapstructure:"TOPIC"`
-	OrderingKey string    `mapstructure:"ORDERING_KEY"`
-	Type        QueueType `mapstructure:"TYPE"`
-	Payload     string    `mapstructure:"PAYLOAD"`
-	Attributes  string    `mapstructure:"ATTRIBUTES"`
+	Type       QueueType `mapstructure:"TYPE"`
+	Payload    string    `mapstructure:"PAYLOAD"`
+	Attributes string    `mapstructure:"ATTRIBUTES"`
+
+	PubSub PubSubConfig `mapstructure:"PUBSUB"`
+	Kafka  KafkaConfig  `mapstructure:"KAFKA"`
 }
 
 // ConnectionConfig holds connection details.
@@ -44,14 +46,33 @@ type QueueConfig struct {
 //   - gcp-pubsub: ProjectID (required), CredentialsFile (optional), EmulatorHost (optional)
 //   - kafka/rabbitmq: Brokers (future)
 type ConnectionConfig struct {
-	PubSub PubSubConfig `mapstructure:"PUBSUB"`
+	PubSub PubSubConnectionConfig `mapstructure:"PUBSUB"`
+	Kafka  KafkaConnectionConfig  `mapstructure:"KAFKA"`
 }
 
-// PubSubConfig holds Google Cloud PubSub connection details.
-type PubSubConfig struct {
+// PubSubConnectionConfig holds Google Cloud PubSub connection details.
+type PubSubConnectionConfig struct {
 	ProjectID       string      `mapstructure:"PROJECT_ID" json:",omitempty"`
 	CredentialsFile NonLoggable `mapstructure:"CREDENTIALS_FILE" json:",omitempty"`
 	EmulatorHost    string      `mapstructure:"EMULATOR_HOST" json:",omitempty"`
+}
+
+// PubSubConfig holds Google Cloud PubSub publisher configuration.
+type PubSubConfig struct {
+	Topic       string `mapstructure:"TOPIC"`
+	OrderingKey string `mapstructure:"ORDERING_KEY"`
+}
+
+// KafkaConnectionConfig holds Kafka connection details.
+type KafkaConnectionConfig struct {
+	BootstrapServers string `mapstructure:"BOOTSTRAP_SERVERS"`
+}
+
+// KafkaConfig holds Kafka publisher configuration.
+type KafkaConfig struct {
+	Topic     string `mapstructure:"TOPIC"`
+	Key       string `mapstructure:"KEY"`
+	Partition int    `mapstructure:"PARTITION"`
 }
 
 // StageConfig configuration for a stage run.

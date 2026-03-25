@@ -1,6 +1,8 @@
 // Package messaging defines interfaces and types for queue message publishing.
 package messaging
 
+import "context"
+
 // Message is a message to be published by a Publisher.
 type Message struct {
 	ID          string

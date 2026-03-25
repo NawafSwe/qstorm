@@ -1,9 +1,11 @@
 {
   "QUEUE": {
-    "TOPIC": "qstorm-topic",
     "TYPE": "gcp-pubsub",
     "PAYLOAD": "{\"order_id\": \"{{uuid}}\", \"customer_id\": \"{{uuid}}\", \"amount\": 10}",
-    "ATTRIBUTES": "{\"EVENT_TIMESTAMP\": \"{{timestamp}}\", \"SOURCE\": \"qstorm\", \"ENVIRONMENT\": \"local\", \"MESSAGE_ID\": \"{{uuid}}\"}"
+    "ATTRIBUTES": "{\"EVENT_TIMESTAMP\": \"{{timestamp}}\", \"SOURCE\": \"qstorm\", \"ENVIRONMENT\": \"local\", \"MESSAGE_ID\": \"{{uuid}}\"}",
+    "PUBSUB": {
+      "TOPIC": "qstorm-topic"
+    }
   },
   "STAGES": [
     {
