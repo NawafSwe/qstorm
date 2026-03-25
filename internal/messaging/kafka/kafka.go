@@ -11,25 +11,27 @@ import (
 	"github.com/nawafswe/qstorm/internal/config"
 )
 
-type ConfigKey string
-
+// librdkafka configuration keys.
+// https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md
 const (
-	BootStrapServers ConfigKey = "bootstrap.servers"
+	bootstrapServers = "bootstrap.servers"
+	securityProtocol = "security.protocol"
+	saslMechanism    = "sasl.mechanism"
+	saslUsername     = "sasl.username"
+	saslPassword     = "sasl.password"
+	acks             = "acks"
+	compressionType  = "compression.type"
+	lingerMs         = "linger.ms"
+	batchSize        = "batch.size"
 )
-
-var configMaps = map[ConfigKey]string{
-	BootStrapServers: string(BootStrapServers),
-}
-
-type TopicPartition conkafka.TopicPartition
 
 type Client struct {
 	producer *conkafka.Producer
 }
 
 // NewClient creates a new kafka client.
-func NewClient(_ context.Context, configs map[ConfigKey]string) (Client, error) {
-	producerCfg := applyConfig(configs)
+func NewClient(_ context.Context, kafkaConnConfig config.KafkaConnectionConfig, kafkaConfig config.KafkaConfig) (Client, error) {
+	producerCfg := applyConfig(kafkaConnConfig, kafkaConfig.Producer)
 	p, err := conkafka.NewProducer(&producerCfg)
 	if err != nil {
 		return Client{}, fmt.Errorf("failed to create kafka producer: %w", err)
@@ -90,14 +92,40 @@ func (c Client) Close() error {
 	return nil
 }
 
-func applyConfig(configs map[ConfigKey]string) conkafka.ConfigMap {
-	cfg := conkafka.ConfigMap{}
-	for k, v := range configs {
-		key, found := configMaps[k]
-		if found {
-			cfg[key] = v
-		}
+func applyConfig(conn config.KafkaConnectionConfig, producer config.KafkaProducerConfig) conkafka.ConfigMap {
+	cfg := conkafka.ConfigMap{
+		bootstrapServers: conn.BootstrapServers,
+		acks:             -1, // default librdkafka
 	}
+
+	// connection/auth
+	if conn.SecurityProtocol != "" {
+		cfg[securityProtocol] = conn.SecurityProtocol
+	}
+	if conn.SASLMechanism != "" {
+		cfg[saslMechanism] = conn.SASLMechanism
+	}
+	if conn.SASLUsername != "" {
+		cfg[saslUsername] = conn.SASLUsername
+	}
+	if conn.SASLPassword != "" {
+		cfg[saslPassword] = conn.SASLPassword.GetValue()
+	}
+
+	// producer tuning
+	if producer.Acks != nil {
+		cfg[acks] = *producer.Acks
+	}
+	if producer.CompressionType != "" {
+		cfg[compressionType] = producer.CompressionType
+	}
+	if producer.LingerMs != 0 {
+		cfg[lingerMs] = producer.LingerMs
+	}
+	if producer.BatchSize != 0 {
+		cfg[batchSize] = producer.BatchSize
+	}
+
 	return cfg
 }
 
