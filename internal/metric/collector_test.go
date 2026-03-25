@@ -83,6 +83,7 @@ func TestCollector_Summary(t *testing.T) {
 				assert.Equal(t, int64(0), s.ErrorCount)
 				assert.Equal(t, float64(0), s.SuccessRate)
 				assert.Equal(t, float64(0), s.FailureRate)
+				assert.Empty(t, s.ErrorsOverview)
 			},
 		},
 
@@ -104,6 +105,7 @@ func TestCollector_Summary(t *testing.T) {
 				assert.Greater(t, s.P50Latency, float64(0))
 				assert.Greater(t, s.P90Latency, float64(0))
 				assert.Greater(t, s.P99Latency, float64(0))
+				assert.Empty(t, s.ErrorsOverview)
 			},
 		},
 
@@ -120,6 +122,26 @@ func TestCollector_Summary(t *testing.T) {
 				assert.Equal(t, int64(2), s.ErrorCount)
 				assert.Equal(t, float64(0), s.SuccessRate)
 				assert.Equal(t, float64(100), s.FailureRate)
+				assert.Equal(t, map[string]int{"e1": 1, "e2": 1}, s.ErrorsOverview)
+			},
+		},
+
+		"errors overview aggregates by message": {
+			records: []struct {
+				duration time.Duration
+				err      error
+			}{
+				{err: errors.New("connection refused")},
+				{err: errors.New("connection refused")},
+				{err: errors.New("context deadline exceeded")},
+				{err: errors.New("connection refused")},
+			},
+			assertFunc: func(t *testing.T, s Summary) {
+				assert.Equal(t, int64(4), s.ErrorCount)
+				assert.Equal(t, map[string]int{
+					"connection refused":        3,
+					"context deadline exceeded": 1,
+				}, s.ErrorsOverview)
 			},
 		},
 
@@ -138,6 +160,7 @@ func TestCollector_Summary(t *testing.T) {
 				assert.Equal(t, int64(1), s.ErrorCount)
 				assert.Equal(t, float64(75), s.SuccessRate)
 				assert.Equal(t, float64(25), s.FailureRate)
+				assert.Equal(t, map[string]int{"fail": 1}, s.ErrorsOverview)
 			},
 		},
 

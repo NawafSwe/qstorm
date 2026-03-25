@@ -96,6 +96,15 @@ func (p Printer) Summary(s metric.Summary, elapsed time.Duration) {
 	// counts
 	p.metricLine("✓", green, "published", fmt.Sprintf("%d", s.SuccessCount))
 	p.metricLine("✗", red, "failed", fmt.Sprintf("%d", s.ErrorCount))
+
+	// errors overview
+	if len(s.ErrorsOverview) > 0 {
+		fmt.Println()
+		for msg, count := range s.ErrorsOverview {
+			dots := strings.Repeat(".", max(1, labelWidth+10-len(msg)))
+			fmt.Printf("         %s%s%s%s: %d\n", red, msg, reset, dots, count)
+		}
+	}
 	fmt.Println()
 
 	// rates
