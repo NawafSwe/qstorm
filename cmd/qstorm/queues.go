@@ -24,4 +24,10 @@ var queuesMap = map[config.QueueType]func(args queueArgs) stormer{
 			printer: args.printer,
 		}
 	},
+	config.ApacheKafka: func(args queueArgs) stormer {
+		return kafkaStorm{
+			cfg:     args.cfg,
+			printer: args.printer,
+		}
+	},
 }
