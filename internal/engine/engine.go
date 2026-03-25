@@ -5,9 +5,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/nawafswe/qstorm/internal/config"
-	"github.com/nawafswe/qstorm/internal/messaging"
 	"github.com/nawafswe/qstorm/internal/metric"
 )
 
@@ -17,15 +15,6 @@ const (
 
 // Option configures optional Engine behavior.
 type Option func(*Engine)
-
-// WithUUIDGenerator overrides the default UUID generator (uuid.NewString).
-func WithUUIDGenerator(gen func() string) Option {
-	return func(engine *Engine) {
-		if gen != nil {
-			engine.uuidGen = gen
-		}
-	}
-}
 
 // WithTimeStampGenerator overrides the default timestamp generator (time.Now().UTC()).
 func WithTimeStampGenerator(gen func() time.Time) Option {
@@ -52,7 +41,7 @@ type (
 	}
 
 	messenger interface {
-		Publish(ctx context.Context, topic string, message messaging.Message) error
+		Publish(ctx context.Context, queueConfig config.QueueConfig) error
 		Close() error
 	}
 	metricAggregator interface {
@@ -71,7 +60,6 @@ type Engine struct {
 	messenger        messenger
 	printer          printer
 	metricAggregator metricAggregator
-	uuidGen          func() string
 	timeStampGen     func() time.Time
 	progressTicker   time.Duration
 }
@@ -81,7 +69,6 @@ func NewEngine(templateRenderer templateRenderer, messenger messenger, metricAgg
 	e := Engine{
 		templateRenderer: templateRenderer,
 		messenger:        messenger,
-		uuidGen:          uuid.NewString,
 		timeStampGen: func() time.Time {
 			return time.Now().UTC()
 		},
@@ -121,12 +108,7 @@ func (e Engine) runStage(ctx context.Context, queue config.QueueConfig, stage co
 		}
 
 		start := e.timeStampGen()
-		err = e.messenger.Publish(gCtx, templatedQueue.PubSub.Topic, messaging.Message{
-			ID:          e.uuidGen(),
-			Data:        []byte(templatedQueue.Payload),
-			Attributes:  templatedQueue.Attributes,
-			OrderingKey: templatedQueue.PubSub.OrderingKey,
-		})
+		err = e.messenger.Publish(gCtx, templatedQueue)
 		end := time.Since(start)
 		e.metricAggregator.Record(end, err)
 	}

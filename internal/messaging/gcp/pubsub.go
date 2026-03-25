@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/pubsub/v2"
-	"github.com/nawafswe/qstorm/internal/messaging"
+	"github.com/nawafswe/qstorm/internal/config"
 	"google.golang.org/api/option"
 )
 
@@ -48,26 +48,26 @@ func NewClient(ctx context.Context, projectID string, opts ...Option) (Client, e
 }
 
 // Publish sends a message to the given PubSub topic and waits for confirmation.
-func (c Client) Publish(ctx context.Context, topic string, message messaging.Message) error {
-	publisher := c.client.Publisher(topic)
-	if message.OrderingKey != "" {
+func (c Client) Publish(ctx context.Context, queueConfig config.QueueConfig) error {
+	pubSubTopicConfig := queueConfig.PubSub
+	publisher := c.client.Publisher(pubSubTopicConfig.Topic)
+	if pubSubTopicConfig.OrderingKey != "" {
 		publisher.EnableMessageOrdering = true
 	}
 	var attrs map[string]string
-	if err := json.Unmarshal([]byte(message.Attributes), &attrs); err != nil {
+	if err := json.Unmarshal([]byte(queueConfig.Attributes), &attrs); err != nil {
 		return fmt.Errorf("failed to unmarshal attributes: %w", err)
 	}
 	result := publisher.Publish(ctx, &pubsub.Message{
-		ID:          message.ID,
-		Data:        message.Data,
+		Data:        []byte(queueConfig.Payload),
 		Attributes:  attrs,
-		OrderingKey: message.OrderingKey,
+		OrderingKey: pubSubTopicConfig.OrderingKey,
 	})
 	<-result.Ready()
 	// ignoring serverID as it is not used.
 	_, err := result.Get(ctx)
 	if err != nil {
-		return fmt.Errorf("failed publishing message to topic %s: %w", topic, err)
+		return fmt.Errorf("failed publishing message to topic %s: %w", pubSubTopicConfig.Topic, err)
 	}
 	return nil
 }
