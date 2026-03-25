@@ -75,7 +75,7 @@ type KafkaConnectionConfig struct {
 // KafkaConfig holds Kafka configuration.
 type KafkaConfig struct {
 	Topic     string              `mapstructure:"TOPIC"`
-	Key       string              `mapstructure:"KEY"`
+	Key       *string             `mapstructure:"KEY"`
 	Partition int                 `mapstructure:"PARTITION"`
 	Producer  KafkaProducerConfig `mapstructure:"PRODUCER"`
 }

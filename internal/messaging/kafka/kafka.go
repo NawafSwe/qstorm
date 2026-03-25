@@ -7,7 +7,6 @@ import (
 	"time"
 
 	conkafka "github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/google/uuid"
 	"github.com/nawafswe/qstorm/internal/config"
 )
 
@@ -45,7 +44,6 @@ func NewClient(_ context.Context, kafkaConnConfig config.KafkaConnectionConfig, 
 // Publish sends a message to the given kafka topic.
 func (c Client) Publish(ctx context.Context, queueConfig config.QueueConfig) error {
 	kafkaConfig := queueConfig.Kafka
-	msgID := uuid.New().String()
 	headers, err := messageHeaders(queueConfig.Attributes)
 	if err != nil {
 		return fmt.Errorf("failed to create message headers: %w", err)
@@ -67,7 +65,7 @@ func (c Client) Publish(ctx context.Context, queueConfig config.QueueConfig) err
 			Error:     nil,
 		},
 		Value:         []byte(queueConfig.Payload),
-		Key:           []byte(msgID),
+		Key:           keyBytes(kafkaConfig.Key),
 		Timestamp:     time.Now().UTC(),
 		TimestampType: 0,
 		Opaque:        nil,
@@ -153,4 +151,11 @@ func messageHeaders(attributes string) ([]conkafka.Header, error) {
 		})
 	}
 	return headers, nil
+}
+
+func keyBytes(key *string) []byte {
+	if key == nil {
+		return nil
+	}
+	return []byte(*key)
 }

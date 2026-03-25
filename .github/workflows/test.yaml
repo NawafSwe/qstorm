@@ -45,16 +45,29 @@ jobs:
           go-version: "1.26.1"
           cache-dependency-path: go.sum
 
-      - name: Start emulator
+      - name: Start services
         run: make docker-start
 
-      - name: Wait for emulator and create topic
+      - name: Wait for PubSub emulator and create topic
         run: |
           for i in $(seq 1 30); do
             curl -s -X PUT http://localhost:8095/v1/projects/qstorm-project/topics/qstorm-topic > /dev/null 2>&1 && break
             sleep 1
           done
           curl -sf http://localhost:8095/v1/projects/qstorm-project/topics/qstorm-topic || exit 1
+
+      - name: Wait for Kafka brokers
+        run: |
+          for i in $(seq 1 30); do
+            docker compose logs kafka 2>&1 | grep -q "Kafka Server started" && break
+            sleep 1
+          done
+          docker compose logs kafka 2>&1 | grep -q "Kafka Server started" || exit 1
+          for i in $(seq 1 30); do
+            docker compose logs kafka-sasl 2>&1 | grep -q "Kafka Server started" && break
+            sleep 1
+          done
+          docker compose logs kafka-sasl 2>&1 | grep -q "Kafka Server started" || exit 1
 
       - name: Run integration tests
         run: make test-integration
