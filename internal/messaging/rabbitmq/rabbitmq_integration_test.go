@@ -92,20 +92,84 @@ func TestClient_NewClient(t *testing.T) {
 			},
 			expectedErr: fmt.Errorf("failed to dial rabbitmq"),
 		},
-		"fails with conflicting queue properties": {
+		"fails with conflicting queue durable property": {
 			brokerURL: brokerURL,
 			setup: func(t *testing.T) {
 				t.Helper()
 				client, err := rabbitmq.NewClient(context.Background(), brokerURL, config.RabbitmqConfig{
-					Queue: config.RabbitmqQueueConfig{Name: testQueue + "-conflict"},
+					Queue: config.RabbitmqQueueConfig{Name: testQueue + "-conflict-durable"},
 				})
 				assert.NoError(t, err)
 				_ = client.Close()
 			},
 			cfg: config.RabbitmqConfig{
 				Queue: config.RabbitmqQueueConfig{
-					Name:    testQueue + "-conflict",
+					Name:    testQueue + "-conflict-durable",
 					Durable: true,
+				},
+			},
+			expectedErr: fmt.Errorf("failed to declare a queue"),
+		},
+		"fails with exclusive queue on quorum type": {
+			brokerURL: brokerURL,
+			cfg: config.RabbitmqConfig{
+				Queue: config.RabbitmqQueueConfig{
+					Name:      testQueue + "-exclusive-quorum",
+					Durable:   true,
+					Exclusive: true,
+					Args:      map[string]any{"x-queue-type": "quorum"},
+				},
+			},
+			expectedErr: fmt.Errorf("failed to declare a queue"),
+		},
+		"fails with auto-delete on quorum type": {
+			brokerURL: brokerURL,
+			cfg: config.RabbitmqConfig{
+				Queue: config.RabbitmqQueueConfig{
+					Name:       testQueue + "-autodelete-quorum",
+					Durable:    true,
+					AutoDelete: true,
+					Args:       map[string]any{"x-queue-type": "quorum"},
+				},
+			},
+			expectedErr: fmt.Errorf("failed to declare a queue"),
+		},
+		"fails with conflicting exchange kind": {
+			brokerURL: brokerURL,
+			setup: func(t *testing.T) {
+				t.Helper()
+				client, err := rabbitmq.NewClient(context.Background(), brokerURL, config.RabbitmqConfig{
+					Queue: config.RabbitmqQueueConfig{Name: testQueue + "-exch-conflict"},
+					Exchange: config.RabbitmqExchangeConfig{
+						Name: "qstorm-conflict-exchange",
+						Kind: "direct",
+					},
+					Publisher: config.RabbitmqPublisherConfig{
+						RoutingKey: testQueue + "-exch-conflict",
+					},
+				})
+				assert.NoError(t, err)
+				_ = client.Close()
+			},
+			cfg: config.RabbitmqConfig{
+				Queue: config.RabbitmqQueueConfig{Name: testQueue + "-exch-conflict-2"},
+				Exchange: config.RabbitmqExchangeConfig{
+					Name: "qstorm-conflict-exchange",
+					Kind: "fanout",
+				},
+				Publisher: config.RabbitmqPublisherConfig{
+					RoutingKey: testQueue + "-exch-conflict-2",
+				},
+			},
+			expectedErr: fmt.Errorf("failed to declare an exchange"),
+		},
+		"fails with non-durable quorum queue": {
+			brokerURL: brokerURL,
+			cfg: config.RabbitmqConfig{
+				Queue: config.RabbitmqQueueConfig{
+					Name:    testQueue + "-nondurable-quorum",
+					Durable: false,
+					Args:    map[string]any{"x-queue-type": "quorum"},
 				},
 			},
 			expectedErr: fmt.Errorf("failed to declare a queue"),
