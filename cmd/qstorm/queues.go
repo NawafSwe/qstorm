@@ -30,4 +30,10 @@ var queuesMap = map[config.QueueType]func(args queueArgs) stormer{
 			printer: args.printer,
 		}
 	},
+	config.RabbitMQ: func(args queueArgs) stormer {
+		return rabbitmqStorm{
+			cfg:     args.cfg,
+			printer: args.printer,
+		}
+	},
 }

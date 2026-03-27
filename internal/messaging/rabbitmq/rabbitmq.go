@@ -127,7 +127,7 @@ func headers(attrs string) (amqp.Table, error) {
 	var jsonAttrs map[string]any
 	err := json.Unmarshal([]byte(attrs), &jsonAttrs)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal message attributes: %w", err)
 	}
 	return jsonAttrs, nil
 }
