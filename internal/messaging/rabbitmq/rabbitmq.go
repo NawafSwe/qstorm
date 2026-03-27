@@ -28,12 +28,14 @@ func NewClient(_ context.Context, brokerURL string, cfg config.RabbitmqConfig) (
 	}
 	ch, err := connection.Channel()
 	if err != nil {
+		_ = connection.Close()
 		return Client{}, fmt.Errorf("failed to open a channel: %w", err)
 	}
 	var confirmationChan chan amqp.Confirmation
 	if cfg.Channel.ConfirmMode {
 		err = ch.Confirm(false)
 		if err != nil {
+			_ = connection.Close()
 			return Client{}, fmt.Errorf("failed to enable confirm mode: %w", err)
 		}
 		confirmationChan = ch.NotifyPublish(make(chan amqp.Confirmation, 1))
@@ -46,6 +48,7 @@ func NewClient(_ context.Context, brokerURL string, cfg config.RabbitmqConfig) (
 		cfg.Queue.NoWait,
 		cfg.Queue.Args)
 	if err != nil {
+		_ = connection.Close()
 		return Client{}, fmt.Errorf("failed to declare a queue: %w", err)
 	}
 	if cfg.Exchange.Name != "" {
@@ -59,10 +62,12 @@ func NewClient(_ context.Context, brokerURL string, cfg config.RabbitmqConfig) (
 			cfg.Exchange.Args,
 		)
 		if err != nil {
+			_ = connection.Close()
 			return Client{}, fmt.Errorf("failed to declare an exchange: %w", err)
 		}
 		err = ch.QueueBind(cfg.Queue.Name, cfg.Publisher.RoutingKey, cfg.Exchange.Name, false, nil)
 		if err != nil {
+			_ = connection.Close()
 			return Client{}, fmt.Errorf("failed to bind queue to exchange: %w", err)
 		}
 	}
