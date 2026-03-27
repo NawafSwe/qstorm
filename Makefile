@@ -5,7 +5,7 @@ export GO111MODULE=on
 #===================#
 DOCKER_COMPOSE_FILE ?= docker-compose.yaml
 BINARY_NAME         ?= qstorm
-
+VERSION ?= $(shell git describe --tags --always --dirty)
 help: ## Show this help
 	@IFS=$$'\n' ; \
 	help_lines=(`fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##/:/'`); \
@@ -25,7 +25,7 @@ help: ## Show this help
 
 build: ## Build the binary
 	@echo "Building $(BINARY_NAME)..."
-	go build -o ./bin/$(BINARY_NAME) ./cmd/qstorm/
+	go build -ldflags "-X main.version=$(VERSION)" -o ./bin/$(BINARY_NAME) ./cmd/qstorm/
 
 build-docker: ## Build the Docker image
 	docker build -t $(BINARY_NAME):latest . --no-cache
