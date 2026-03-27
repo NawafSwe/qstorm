@@ -13,8 +13,20 @@ import (
 )
 
 var topicsMapping = map[config.QueueType]func(config.QueueConfig) string{
-	config.GCPPubSub:   func(c config.QueueConfig) string { return c.PubSub.Topic },
-	config.ApacheKafka: func(c config.QueueConfig) string { return c.Kafka.Topic },
+	config.GCPPubSub: func(c config.QueueConfig) string {
+		return fmt.Sprintf("  %stopic%s:     %s", bold, reset, c.PubSub.Topic)
+	},
+	config.ApacheKafka: func(c config.QueueConfig) string {
+		return fmt.Sprintf("  %stopic%s:     %s", bold, reset, c.Kafka.Topic)
+	},
+	config.RabbitMQ: func(c config.QueueConfig) string {
+		s := fmt.Sprintf("  %squeue%s:     %s", bold, reset, c.Rabbitmq.Queue.Name)
+		if c.Rabbitmq.Exchange.Name != "" {
+			s += fmt.Sprintf("\n  %sexchange%s:  %s", bold, reset, c.Rabbitmq.Exchange.Name)
+			s += fmt.Sprintf("\n  %srouting%s:   %s", bold, reset, c.Rabbitmq.Publisher.RoutingKey)
+		}
+		return s
+	},
 }
 
 const (
@@ -61,7 +73,7 @@ func (p Printer) Config(cfg config.Config) {
 
 	fmt.Printf("  %sexecution%s: local\n", bold, reset)
 	fmt.Printf("  %squeue%s:     %s\n", bold, reset, cfg.Queue.Type)
-	fmt.Printf("  %stopic%s:     %s\n", bold, reset, topic(cfg.Queue))
+	printQueueConfig(cfg.Queue)
 	fmt.Printf("  %sstages%s:    %d configured, ~%s total\n", bold, reset, len(cfg.Stages), totalDuration)
 	fmt.Printf("  %sexpected%s:  ~%d messages\n", bold, reset, totalMessages)
 	fmt.Println()
@@ -198,10 +210,11 @@ func (p Printer) progressBar(elapsed time.Duration) string {
 	return fmt.Sprintf("running [%s]", truncated)
 }
 
-func topic(queueConfig config.QueueConfig) string {
-	f, found := topicsMapping[queueConfig.Type]
+func printQueueConfig(cfg config.QueueConfig) {
+	f, found := topicsMapping[cfg.Type]
 	if !found {
-		return ""
+		fmt.Println()
+		return
 	}
-	return f(queueConfig)
+	fmt.Println(f(cfg))
 }
