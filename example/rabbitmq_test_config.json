@@ -1,0 +1,44 @@
+{
+  "QUEUE": {
+    "TYPE": "rabbitmq",
+    "PAYLOAD": "{\"order_id\": \"{{uuid}}\", \"customer_id\": \"{{uuid}}\", \"amount\": 10}",
+    "ATTRIBUTES": "{\"EVENT_TIMESTAMP\": \"{{timestamp}}\", \"SOURCE\": \"qstorm\", \"ENVIRONMENT\": \"local\", \"MESSAGE_ID\": \"{{uuid}}\"}",
+    "RABBITMQ": {
+      "QUEUE": {
+        "NAME": "qstorm-queue",
+        "ARGS": {
+          "x-queue-type": "quorum"
+        },
+        "DURABLE": true,
+        "AUTO_DELETE": false,
+        "EXCLUSIVE": false,
+        "NO_WAIT": false
+      },
+      "EXCHANGE": {
+        "NAME": "qstorm-exchange",
+        "KIND": "direct",
+        "DURABLE": true,
+        "AUTO_DELETE": false,
+        "INTERNAL": false,
+        "NO_WAIT": false
+      },
+      "PUBLISHER": {
+        "EXCHANGE": "qstorm-exchange",
+        "ROUTING_KEY": "qstorm-routing-key"
+      },
+      "CHANNEL": {
+        "CONFIRM_MODE": true
+      }
+    }
+  },
+  "STAGES": [
+    {
+      "DURATION": "30s",
+      "RATE": 10
+    },
+    {
+      "DURATION": "10s",
+      "RATE": 30
+    }
+  ]
+}
