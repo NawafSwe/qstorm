@@ -61,30 +61,32 @@ QStorm is a **client-side tool**. It runs from your machine or CI pipeline and p
 - Go 1.26+
 - Docker (for running queues locally)
 
-### Build from source
+### Install via Go
 
 ```bash
-git clone https://github.com/nawafswe/qstorm.git
-cd qstorm
-make build
+go install github.com/nawafswe/qstorm/cmd/qstorm@latest
 ```
 
-### Add to PATH
-
-To run `qstorm` from anywhere:
+This installs the `qstorm` binary to `$GOPATH/bin` (or `$HOME/go/bin` by default). If `qstorm` is not found after install, add Go's bin directory to your PATH:
 
 ```bash
-# Option 1: symlink to a directory already in PATH
-sudo ln -s $(pwd)/bin/qstorm /usr/local/bin/qstorm
-
-# Option 2: add the bin directory to PATH (add to ~/.zshrc or ~/.bashrc)
-export PATH="$PATH:/path/to/qstorm/bin"
+# add to ~/.zshrc or ~/.bashrc
+export PATH="$PATH:$(go env GOPATH)/bin"
 ```
 
 Verify:
 
 ```bash
 qstorm --version
+```
+
+### Build from source
+
+```bash
+git clone https://github.com/nawafswe/qstorm.git
+cd qstorm
+make build
+./bin/qstorm --version
 ```
 
 ## Usage
