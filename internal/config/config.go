@@ -22,6 +22,7 @@ type QueueType string
 const (
 	GCPPubSub   QueueType = "gcp-pubsub"
 	ApacheKafka QueueType = "apache-kafka"
+	RabbitMQ    QueueType = "rabbitmq"
 )
 
 // Config is the configuration for the application.
@@ -37,8 +38,9 @@ type QueueConfig struct {
 	Payload    string    `mapstructure:"PAYLOAD"`
 	Attributes string    `mapstructure:"ATTRIBUTES"`
 
-	PubSub PubSubConfig `mapstructure:"PUBSUB"`
-	Kafka  KafkaConfig  `mapstructure:"KAFKA"`
+	PubSub   PubSubConfig   `mapstructure:"PUBSUB"`
+	Kafka    KafkaConfig    `mapstructure:"KAFKA"`
+	Rabbitmq RabbitmqConfig `mapstructure:"RABBITMQ"`
 }
 
 // ConnectionConfig holds connection details.
@@ -46,8 +48,9 @@ type QueueConfig struct {
 //   - gcp-pubsub: ProjectID (required), CredentialsFile (optional), EmulatorHost (optional)
 //   - kafka/rabbitmq: Brokers (future)
 type ConnectionConfig struct {
-	PubSub PubSubConnectionConfig `mapstructure:"PUBSUB"`
-	Kafka  KafkaConnectionConfig  `mapstructure:"KAFKA"`
+	PubSub   PubSubConnectionConfig   `mapstructure:"PUBSUB"`
+	Kafka    KafkaConnectionConfig    `mapstructure:"KAFKA"`
+	Rabbitmq RabbitmqConnectionConfig `mapstructure:"RABBITMQ"`
 }
 
 // PubSubConnectionConfig holds Google Cloud PubSub connection details.
@@ -86,6 +89,54 @@ type KafkaProducerConfig struct {
 	CompressionType string `mapstructure:"COMPRESSION_TYPE"`
 	LingerMs        int    `mapstructure:"LINGER_MS"`
 	BatchSize       int    `mapstructure:"BATCH_SIZE"`
+}
+
+// RabbitmqConfig holds Rabbitmq configuration.
+type RabbitmqConfig struct {
+	Queue     RabbitmqQueueConfig     `mapstructure:"QUEUE"`
+	Exchange  RabbitmqExchangeConfig  `mapstructure:"EXCHANGE"`
+	Publisher RabbitmqPublisherConfig `mapstructure:"PUBLISHER"`
+	Channel   RabbitmqChannelConfig   `mapstructure:"CHANNEL"`
+}
+
+type RabbitmqChannelConfig struct {
+	ConfirmMode bool `mapstructure:"CONFIRM_MODE"`
+}
+
+// RabbitmqQueueConfig holds Rabbitmq queue configurations.
+type RabbitmqQueueConfig struct {
+	Name       string         `mapstructure:"NAME"`
+	Durable    bool           `mapstructure:"DURABLE"`
+	AutoDelete bool           `mapstructure:"AUTO_DELETE"`
+	Exclusive  bool           `mapstructure:"EXCLUSIVE"`
+	NoWait     bool           `mapstructure:"NO_WAIT"`
+	Args       map[string]any `mapstructure:"ARGS"`
+}
+
+// RabbitmqExchangeConfig holds Rabbitmq exchange configurations.
+type RabbitmqExchangeConfig struct {
+	Name       string         `mapstructure:"NAME"`
+	Kind       string         `mapstructure:"KIND"`
+	Durable    bool           `mapstructure:"DURABLE"`
+	AutoDelete bool           `mapstructure:"AUTO_DELETE"`
+	Internal   bool           `mapstructure:"INTERNAL"`
+	NoWait     bool           `mapstructure:"NO_WAIT"`
+	Args       map[string]any `mapstructure:"ARGS"`
+}
+
+// RabbitmqPublisherConfig holds Rabbitmq publisher configurations.
+type RabbitmqPublisherConfig struct {
+	Exchange     string `mapstructure:"EXCHANGE"`
+	RoutingKey   string `mapstructure:"ROUTING_KEY"`
+	Mandatory    bool   `mapstructure:"MANDATORY"`
+	ContentType  string `mapstructure:"CONTENT_TYPE"`
+	DeliveryMode uint8  `mapstructure:"DELIVERY_MODE"`
+	Priority     uint8  `mapstructure:"PRIORITY"`
+}
+
+// RabbitmqConnectionConfig holds Rabbitmq connection details.
+type RabbitmqConnectionConfig struct {
+	URL string `mapstructure:"URL"`
 }
 
 // StageConfig configuration for a stage run.
