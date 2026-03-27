@@ -23,7 +23,6 @@
         "NO_WAIT": false
       },
       "PUBLISHER": {
-        "EXCHANGE": "qstorm-exchange",
         "ROUTING_KEY": "qstorm-routing-key"
       },
       "CHANNEL": {

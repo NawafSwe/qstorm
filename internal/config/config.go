@@ -126,7 +126,6 @@ type RabbitmqExchangeConfig struct {
 
 // RabbitmqPublisherConfig holds Rabbitmq publisher configurations.
 type RabbitmqPublisherConfig struct {
-	Exchange     string `mapstructure:"EXCHANGE"`
 	RoutingKey   string `mapstructure:"ROUTING_KEY"`
 	Mandatory    bool   `mapstructure:"MANDATORY"`
 	ContentType  string `mapstructure:"CONTENT_TYPE"`
