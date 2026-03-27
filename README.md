@@ -468,18 +468,6 @@ QStorm collects metrics using [HDR Histogram](https://github.com/HdrHistogram/hd
 - **publish_latency**: avg, p50, p75, p90, p99
 - **duration**: total test time
 
-### Consumer Lag Metrics
-
-Consumer lag metrics allow you to measure not just publish performance, but how your consumers keep up under load. This is planned for future discovery across all supported queue technologies:
-
-| Queue | Metric source | Status |
-|---|---|---|
-| Google Cloud PubSub | Subscription-level metrics via Cloud Monitoring API | Planned |
-| Apache Kafka | Consumer group lag via admin API (`ListConsumerGroupOffsets`) | Planned |
-| RabbitMQ | Queue depth and consumer utilization via Management API | Planned |
-| Apache Pulsar | Subscription backlog via admin API | Planned |
-| Apache ActiveMQ | Queue size via JMX or Jolokia API | Planned |
-
 ## Roadmap
 
 - [ ] Apache Pulsar support
