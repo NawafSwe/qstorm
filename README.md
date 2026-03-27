@@ -387,6 +387,7 @@ Optional. When `NAME` is empty, messages are published to the default exchange (
 | `AUTO_DELETE` | bool | no | false | Exchange deleted when no bindings remain |
 | `INTERNAL` | bool | no | false | Exchange cannot receive publishes directly |
 | `NO_WAIT` | bool | no | false | Skip server confirmation |
+| `ARGS` | object | no | nil | Exchange arguments |
 
 #### Channel config (`RABBITMQ.CHANNEL`)
 
@@ -420,7 +421,7 @@ RABBITMQ__URL=amqp://guest:guest@localhost:5672
 RABBITMQ__URL=amqps://user:pass@broker.prod:5671
 ```
 
-> See [RabbitMQ documentation](https://www.rabbitmq.com/docs) for more details. See also [docs/rabbitmq-reference.md](docs/rabbitmq-reference.md) for a detailed configuration reference specific to QStorm.
+> See [RabbitMQ documentation](https://www.rabbitmq.com/docs) for more details.
 
 ---
 
