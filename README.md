@@ -50,7 +50,7 @@ QStorm is a **client-side tool**. It runs from your machine or CI pipeline and p
 |:----------------------------------------------:|---|:---:|
 |   <img src="img/pubsub-gcp.svg" width="16">    | Google Cloud PubSub | Supported |
 |  <img src="img/kafka-apache.svg" width="16">   | Apache Kafka | Supported |
-|    <img src="img/RabbitMQ.svg" width="16">     | RabbitMQ | Planned |
+|    <img src="img/RabbitMQ.svg" width="16">     | RabbitMQ | Supported |
 |  <img src="img/pulsar-apache.svg" width="16">  | Apache Pulsar | Planned |
 | <img src="img/activeMQ-apache.svg" width="16"> | Apache ActiveMQ | Planned |
 
@@ -59,7 +59,7 @@ QStorm is a **client-side tool**. It runs from your machine or CI pipeline and p
 ### Prerequisites
 
 - Go 1.26+
-- Docker (for running queue emulators locally)
+- Docker (for running queues locally)
 
 ### Build from source
 
@@ -69,19 +69,36 @@ cd qstorm
 make build
 ```
 
-## Usage
+### Add to PATH
 
-### 1. Start a queue locally
+To run `qstorm` from anywhere:
 
 ```bash
-# PubSub emulator
-docker compose up -d pubsub
+# Option 1: symlink to a directory already in PATH
+sudo ln -s $(pwd)/bin/qstorm /usr/local/bin/qstorm
 
-# Kafka (plaintext)
-docker compose up -d kafka
+# Option 2: add the bin directory to PATH (add to ~/.zshrc or ~/.bashrc)
+export PATH="$PATH:/path/to/qstorm/bin"
+```
 
-# Kafka (SASL auth)
-docker compose up -d kafka-sasl
+Verify:
+
+```bash
+qstorm --version
+```
+
+## Usage
+
+### 1. Start queues locally
+
+```bash
+# Start all services
+make environment
+
+# Or start individually
+make gcp-pubsub   # PubSub emulator (port 8095)
+make kafka         # Kafka plaintext (9092) + SASL (9093)
+make rabbitmq      # RabbitMQ (port 5672)
 ```
 
 ### 2. Configure connection credentials
@@ -100,10 +117,10 @@ See [Queue Configuration](#queue-configuration) for full details per queue type.
 
 ```bash
 # positional argument
-./bin/qstorm config.json
+qstorm config.json
 
 # with flags
-./bin/qstorm --config config.json --env .env
+qstorm --config config.json --env .env
 ```
 
 | Flag | Default | Description |
@@ -159,11 +176,12 @@ Every queue type uses the same top-level structure:
 ```json
 {
   "QUEUE": {
-    "TYPE": "gcp-pubsub | apache-kafka",
+    "TYPE": "gcp-pubsub | apache-kafka | rabbitmq",
     "PAYLOAD": "...",
     "ATTRIBUTES": "...",
     "PUBSUB": { },
-    "KAFKA": { }
+    "KAFKA": { },
+    "RABBITMQ": { }
   },
   "STAGES": [ ]
 }
@@ -171,9 +189,9 @@ Every queue type uses the same top-level structure:
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `TYPE` | string | yes | Queue type: `gcp-pubsub`, `apache-kafka` |
+| `TYPE` | string | yes | Queue type: `gcp-pubsub`, `apache-kafka`, `rabbitmq` |
 | `PAYLOAD` | string | yes | Message body. Supports [template variables](#template-variables) |
-| `ATTRIBUTES` | string | no | JSON key-value pairs attached to each message. Supports [template variables](#template-variables). Maps to PubSub attributes, Kafka headers, etc. |
+| `ATTRIBUTES` | string | no | JSON key-value pairs attached to each message. Supports [template variables](#template-variables). Maps to PubSub attributes, Kafka headers, RabbitMQ headers |
 
 #### STAGES
 
@@ -301,6 +319,111 @@ KAFKA__SASL_PASSWORD=api-secret
 
 ---
 
+### RabbitMQ
+
+#### Test config (JSON)
+
+```json
+{
+  "QUEUE": {
+    "TYPE": "rabbitmq",
+    "PAYLOAD": "{\"order_id\": \"{{uuid}}\"}",
+    "ATTRIBUTES": "{\"SOURCE\": \"qstorm\"}",
+    "RABBITMQ": {
+      "QUEUE": {
+        "NAME": "qstorm-queue",
+        "DURABLE": true,
+        "AUTO_DELETE": false,
+        "EXCLUSIVE": false,
+        "NO_WAIT": false,
+        "ARGS": {
+          "x-queue-type": "quorum"
+        }
+      },
+      "EXCHANGE": {
+        "NAME": "qstorm-exchange",
+        "KIND": "direct",
+        "DURABLE": true,
+        "AUTO_DELETE": false,
+        "INTERNAL": false,
+        "NO_WAIT": false
+      },
+      "CHANNEL": {
+        "CONFIRM_MODE": true
+      },
+      "PUBLISHER": {
+        "ROUTING_KEY": "qstorm-routing-key",
+        "CONTENT_TYPE": "application/json",
+        "DELIVERY_MODE": 2
+      }
+    }
+  },
+  "STAGES": [
+    { "DURATION": "30s", "RATE": 50 }
+  ]
+}
+```
+
+#### Queue config (`RABBITMQ.QUEUE`)
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `NAME` | string | yes | - | Queue name |
+| `DURABLE` | bool | no | false | Queue survives broker restarts. Required for quorum queues |
+| `AUTO_DELETE` | bool | no | false | Queue deleted when last consumer disconnects. Not supported with quorum queues |
+| `EXCLUSIVE` | bool | no | false | Queue only accessible by declaring connection. Not supported with quorum queues |
+| `NO_WAIT` | bool | no | false | Skip server confirmation of declaration |
+| `ARGS` | object | no | nil | Queue arguments. Set `"x-queue-type"` to `"classic"`, `"quorum"`, or `"stream"` |
+
+#### Exchange config (`RABBITMQ.EXCHANGE`)
+
+Optional. When `NAME` is empty, messages are published to the default exchange (routed directly by queue name).
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `NAME` | string | no | "" (default exchange) | Exchange name |
+| `KIND` | string | no | - | Exchange type: `direct`, `fanout`, `topic`, `headers` |
+| `DURABLE` | bool | no | false | Exchange survives broker restarts |
+| `AUTO_DELETE` | bool | no | false | Exchange deleted when no bindings remain |
+| `INTERNAL` | bool | no | false | Exchange cannot receive publishes directly |
+| `NO_WAIT` | bool | no | false | Skip server confirmation |
+
+#### Channel config (`RABBITMQ.CHANNEL`)
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `CONFIRM_MODE` | bool | false | Enable publisher confirms. When true, each published message is acknowledged by the broker. Adds overhead but gives accurate delivery success metrics |
+
+#### Publisher config (`RABBITMQ.PUBLISHER`)
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `ROUTING_KEY` | string | yes | - | Routing key. For default exchange, this must be the queue name |
+| `MANDATORY` | bool | no | false | Return unroutable messages instead of silently dropping them |
+| `CONTENT_TYPE` | string | no | "" | MIME type (e.g. `application/json`). Informational only |
+| `DELIVERY_MODE` | int | no | 0 (transient) | `1` = transient (in-memory, fastest), `2` = persistent (written to disk, survives broker restart) |
+| `PRIORITY` | int | no | 0 | Message priority (0-9). Requires queue with `x-max-priority` argument |
+
+#### Connection config (`.env`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `RABBITMQ__URL` | yes | AMQP connection URL |
+
+**Local:**
+```env
+RABBITMQ__URL=amqp://guest:guest@localhost:5672
+```
+
+**TLS:**
+```env
+RABBITMQ__URL=amqps://user:pass@broker.prod:5671
+```
+
+> See [RabbitMQ documentation](https://www.rabbitmq.com/docs) for more details. See also [docs/rabbitmq-reference.md](docs/rabbitmq-reference.md) for a detailed configuration reference specific to QStorm.
+
+---
+
 ## Concepts
 
 ### Stages
@@ -344,11 +467,23 @@ QStorm collects metrics using [HDR Histogram](https://github.com/HdrHistogram/hd
 - **publish_latency**: avg, p50, p75, p90, p99
 - **duration**: total test time
 
+### Consumer Lag Metrics
+
+Consumer lag metrics allow you to measure not just publish performance, but how your consumers keep up under load. This is planned for future discovery across all supported queue technologies:
+
+| Queue | Metric source | Status |
+|---|---|---|
+| Google Cloud PubSub | Subscription-level metrics via Cloud Monitoring API | Planned |
+| Apache Kafka | Consumer group lag via admin API (`ListConsumerGroupOffsets`) | Planned |
+| RabbitMQ | Queue depth and consumer utilization via Management API | Planned |
+| Apache Pulsar | Subscription backlog via admin API | Planned |
+| Apache ActiveMQ | Queue size via JMX or Jolokia API | Planned |
+
 ## Roadmap
 
-- [ ] RabbitMQ support
 - [ ] Apache Pulsar support
 - [ ] Apache ActiveMQ support
+- [ ] Consumer lag metrics (cross-queue)
 - [ ] Threshold assertions (fail if p99 > Xms or error rate > Y%)
 - [ ] Result export (JSON, CSV) for CI/CD integration
 - [ ] Custom template functions (`{{rand_int 1 100}}`, `{{rand_string 10}}`)

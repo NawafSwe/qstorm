@@ -87,12 +87,48 @@ docker-restart: docker-stop docker-start ## Restart Docker environment
 #== LOCAL DEVELOPMENT  ==#
 #========================#
 
-environment: docker-start ## Start emulator and create PubSub topic
-	@echo "Waiting for PubSub emulator to be ready..."
-	@sleep 3
-	@curl -s -X PUT http://localhost:8095/v1/projects/qstorm-project/topics/qstorm-topic > /dev/null && \
-		echo "Topic 'qstorm-topic' created successfully" || \
-		echo "Topic may already exist"
+gcp-pubsub: ## Start PubSub emulator and create topic
+	@docker compose up -d pubsub
+	@echo "Waiting for PubSub emulator..."
+	@for i in $$(seq 1 30); do \
+		curl -s -X PUT http://localhost:8095/v1/projects/qstorm-project/topics/qstorm-topic > /dev/null 2>&1 && break; \
+		sleep 1; \
+	done
+	@curl -sf http://localhost:8095/v1/projects/qstorm-project/topics/qstorm-topic > /dev/null && \
+		echo "PubSub: ready (port 8095, topic created)" || \
+		echo "PubSub: FAILED to create topic"
+
+kafka: ## Start Kafka (plaintext + SASL)
+	@docker compose up -d kafka kafka-sasl
+	@echo "Waiting for Kafka brokers..."
+	@for i in $$(seq 1 30); do \
+		docker compose logs kafka 2>&1 | grep -q "Kafka Server started" && break; \
+		sleep 1; \
+	done
+	@docker compose logs kafka 2>&1 | grep -q "Kafka Server started" && \
+		echo "Kafka: ready (port 9092)" || \
+		echo "Kafka: FAILED to start"
+	@for i in $$(seq 1 30); do \
+		docker compose logs kafka-sasl 2>&1 | grep -q "Kafka Server started" && break; \
+		sleep 1; \
+	done
+	@docker compose logs kafka-sasl 2>&1 | grep -q "Kafka Server started" && \
+		echo "Kafka SASL: ready (port 9093)" || \
+		echo "Kafka SASL: FAILED to start"
+
+rabbitmq: ## Start RabbitMQ
+	@docker compose up -d rabbitmq
+	@echo "Waiting for RabbitMQ..."
+	@for i in $$(seq 1 30); do \
+		docker compose logs rabbitmq 2>&1 | grep -q "Server startup complete" && break; \
+		sleep 1; \
+	done
+	@docker compose logs rabbitmq 2>&1 | grep -q "Server startup complete" && \
+		echo "RabbitMQ: ready (port 5672)" || \
+		echo "RabbitMQ: FAILED to start"
+
+environment: gcp-pubsub kafka rabbitmq ## Start all services and wait for readiness
+	@echo "All services ready."
 
 run: build ## Build and run with example config
 	./bin/$(BINARY_NAME) example/gcp_pubsub_test_config.json
@@ -100,4 +136,4 @@ run: build ## Build and run with example config
 .PHONY: help build build-docker env clean \
         lint test test-integration fmt generate \
         docker-start docker-stop docker-clean docker-restart \
-        environment run
+        gcp-pubsub kafka rabbitmq environment run
