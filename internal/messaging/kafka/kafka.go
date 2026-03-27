@@ -1,3 +1,4 @@
+// Package kafka provides a kafka client.
 package kafka
 
 import (
