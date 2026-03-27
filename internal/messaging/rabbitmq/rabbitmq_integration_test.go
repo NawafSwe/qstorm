@@ -38,10 +38,10 @@ func defaultQueueConfig() config.RabbitmqQueueConfig {
 
 func TestClient_NewClient(t *testing.T) {
 	tests := map[string]struct {
-		brokerURL string
-		cfg       config.RabbitmqConfig
-		wantErr   bool
-		errMsg    string
+		brokerURL   string
+		cfg         config.RabbitmqConfig
+		setup       func(t *testing.T)
+		expectedErr error
 	}{
 		"connects with valid credentials": {
 			brokerURL: brokerURL,
@@ -83,37 +83,44 @@ func TestClient_NewClient(t *testing.T) {
 			cfg: config.RabbitmqConfig{
 				Queue: defaultQueueConfig(),
 			},
-			wantErr: true,
-			errMsg:  "failed to dial rabbitmq",
+			expectedErr: fmt.Errorf("failed to dial rabbitmq"),
 		},
 		"fails with invalid credentials": {
 			brokerURL: "amqp://wrong:wrong@localhost:5672/",
 			cfg: config.RabbitmqConfig{
 				Queue: defaultQueueConfig(),
 			},
-			wantErr: true,
-			errMsg:  "failed to dial rabbitmq",
+			expectedErr: fmt.Errorf("failed to dial rabbitmq"),
 		},
 		"fails with conflicting queue properties": {
 			brokerURL: brokerURL,
+			setup: func(t *testing.T) {
+				t.Helper()
+				client, err := rabbitmq.NewClient(context.Background(), brokerURL, config.RabbitmqConfig{
+					Queue: config.RabbitmqQueueConfig{Name: testQueue + "-conflict"},
+				})
+				assert.NoError(t, err)
+				_ = client.Close()
+			},
 			cfg: config.RabbitmqConfig{
 				Queue: config.RabbitmqQueueConfig{
-					Name:    testQueue,
+					Name:    testQueue + "-conflict",
 					Durable: true,
-					Args:    map[string]any{"x-queue-type": "quorum"},
 				},
 			},
-			wantErr: true,
-			errMsg:  "failed to declare a queue",
+			expectedErr: fmt.Errorf("failed to declare a queue"),
 		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			if tc.setup != nil {
+				tc.setup(t)
+			}
 			client, err := rabbitmq.NewClient(context.Background(), tc.brokerURL, tc.cfg)
-			if tc.wantErr {
+			if tc.expectedErr != nil {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.errMsg)
+				assert.Contains(t, err.Error(), tc.expectedErr.Error())
 			} else {
 				assert.NoError(t, err)
 				_ = client.Close()
