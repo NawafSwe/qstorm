@@ -12,10 +12,18 @@ import (
 	"github.com/nawafswe/qstorm/internal/printer"
 )
 
+var version = "0.1.0"
+
 func main() {
 	configPath := flag.String("config", "", "path to the JSON test config file")
 	envPath := flag.String("env", ".env", "path to the .env connection file")
+	versionFlag := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
+
+	if *versionFlag {
+		fmt.Println("qstorm", version)
+		return
+	}
 
 	if *configPath == "" && flag.NArg() > 0 {
 		*configPath = flag.Arg(0)
