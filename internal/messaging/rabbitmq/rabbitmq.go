@@ -81,7 +81,7 @@ func (c Client) Publish(ctx context.Context, queueConfig config.QueueConfig) err
 		return fmt.Errorf("failed to create message headers: %w", err)
 	}
 	// keeping default values for visibility.
-	err = c.channel.PublishWithContext(ctx, queueConfig.Rabbitmq.Publisher.Exchange, queueConfig.Rabbitmq.Publisher.RoutingKey,
+	err = c.channel.PublishWithContext(ctx, queueConfig.Rabbitmq.Exchange.Name, queueConfig.Rabbitmq.Publisher.RoutingKey,
 		queueConfig.Rabbitmq.Publisher.Mandatory,
 		false,
 		amqp.Publishing{

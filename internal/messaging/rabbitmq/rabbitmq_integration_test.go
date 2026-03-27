@@ -230,14 +230,14 @@ func TestClient_Publish(t *testing.T) {
 						Kind: "direct",
 					},
 					Channel:   config.RabbitmqChannelConfig{ConfirmMode: true},
-					Publisher: config.RabbitmqPublisherConfig{RoutingKey: testQueue + "-via-exchange", Exchange: "qstorm-publish-test-exchange"},
+					Publisher: config.RabbitmqPublisherConfig{RoutingKey: testQueue + "-via-exchange"},
 				})
 			},
 			queueConfig: config.QueueConfig{
 				Payload:    testPayload,
 				Attributes: testAttrs,
 				Rabbitmq: config.RabbitmqConfig{
-					Publisher: config.RabbitmqPublisherConfig{RoutingKey: testQueue + "-via-exchange", Exchange: "qstorm-publish-test-exchange"},
+					Publisher: config.RabbitmqPublisherConfig{RoutingKey: testQueue + "-via-exchange"},
 				},
 			},
 		},
@@ -253,7 +253,8 @@ func TestClient_Publish(t *testing.T) {
 				Payload:    testPayload,
 				Attributes: testAttrs,
 				Rabbitmq: config.RabbitmqConfig{
-					Publisher: config.RabbitmqPublisherConfig{RoutingKey: "invalid-routing-key", Exchange: "non-existent-exchange"},
+					Publisher: config.RabbitmqPublisherConfig{RoutingKey: "invalid-routing-key"},
+					Exchange:  config.RabbitmqExchangeConfig{Name: "-"},
 					Channel:   config.RabbitmqChannelConfig{ConfirmMode: true},
 				},
 			},
