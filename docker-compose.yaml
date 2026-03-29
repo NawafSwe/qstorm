@@ -3,6 +3,8 @@ services:
     image: gcr.io/google.com/cloudsdktool/cloud-sdk:emulators
     entrypoint: gcloud beta emulators pubsub start --project=qstorm-project --host-port=0.0.0.0:8095
     restart: unless-stopped
+    networks:
+      - qstorm
     ports:
       - "8095:8095"
 
@@ -11,6 +13,8 @@ services:
     hostname: kafka
     ports:
       - "9092:9092"
+    networks:
+      - qstorm
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -30,7 +34,9 @@ services:
     ports:
       - "9093:9093"
     volumes:
-      - ./docker/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf:ro
+      - ./docker/kafka/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf:ro
+    networks:
+      - qstorm
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -52,6 +58,8 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    networks:
+      - qstorm
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -59,8 +67,24 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
     restart: unless-stopped
 
+  pulsar:
+    image: apachepulsar/pulsar:4.0.4
+    container_name: pulsar
+    networks:
+      - qstorm
+    ports:
+      - "6650:6650"
+      - "8080:8080"
+    environment:
+      - PULSAR_MEM=-Xms256m -Xmx256m -XX:MaxDirectMemorySize=256m
+    command: bin/pulsar standalone
+    restart: unless-stopped
 
 volumes:
   rabbitmq_data:
     driver: local
 
+
+networks:
+  qstorm:
+    driver: bridge
