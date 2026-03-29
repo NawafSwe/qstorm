@@ -19,6 +19,9 @@ var topicsMapping = map[config.QueueType]func(config.QueueConfig) string{
 	config.ApacheKafka: func(c config.QueueConfig) string {
 		return fmt.Sprintf("  %stopic%s:     %s", bold, reset, c.Kafka.Topic)
 	},
+	config.ApachePulsar: func(c config.QueueConfig) string {
+		return fmt.Sprintf("  %stopic%s:     %s", bold, reset, c.Pulsar.Topic)
+	},
 	config.RabbitMQ: func(c config.QueueConfig) string {
 		s := fmt.Sprintf("  %squeue%s:     %s", bold, reset, c.Rabbitmq.Queue.Name)
 		if c.Rabbitmq.Exchange.Name != "" {

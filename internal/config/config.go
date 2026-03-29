@@ -20,9 +20,10 @@ func (nl NonLoggable) GetValue() string             { return string(nl) }
 type QueueType string
 
 const (
-	GCPPubSub   QueueType = "gcp-pubsub"
-	ApacheKafka QueueType = "apache-kafka"
-	RabbitMQ    QueueType = "rabbitmq"
+	GCPPubSub    QueueType = "gcp-pubsub"
+	ApacheKafka  QueueType = "apache-kafka"
+	RabbitMQ     QueueType = "rabbitmq"
+	ApachePulsar QueueType = "apache-pulsar"
 )
 
 // Config is the configuration for the application.
@@ -41,6 +42,7 @@ type QueueConfig struct {
 	PubSub   PubSubConfig   `mapstructure:"PUBSUB"`
 	Kafka    KafkaConfig    `mapstructure:"KAFKA"`
 	Rabbitmq RabbitmqConfig `mapstructure:"RABBITMQ"`
+	Pulsar   PulsarConfig   `mapstructure:"PULSAR"`
 }
 
 // ConnectionConfig holds connection details.
@@ -51,6 +53,7 @@ type ConnectionConfig struct {
 	PubSub   PubSubConnectionConfig   `mapstructure:"PUBSUB"`
 	Kafka    KafkaConnectionConfig    `mapstructure:"KAFKA"`
 	Rabbitmq RabbitmqConnectionConfig `mapstructure:"RABBITMQ"`
+	Pulsar   PulsarConnectionConfig   `mapstructure:"PULSAR"`
 }
 
 // PubSubConnectionConfig holds Google Cloud PubSub connection details.
@@ -99,6 +102,7 @@ type RabbitmqConfig struct {
 	Channel   RabbitmqChannelConfig   `mapstructure:"CHANNEL"`
 }
 
+// RabbitmqChannelConfig holds Rabbitmq channel configurations.
 type RabbitmqChannelConfig struct {
 	ConfirmMode bool `mapstructure:"CONFIRM_MODE"`
 }
@@ -136,6 +140,40 @@ type RabbitmqPublisherConfig struct {
 // RabbitmqConnectionConfig holds Rabbitmq connection details.
 type RabbitmqConnectionConfig struct {
 	URL string `mapstructure:"URL"`
+}
+
+// PulsarConfig holds Pulsar configuration.
+type PulsarConfig struct {
+	Topic               string                `mapstructure:"TOPIC"`
+	OperationTimeout    time.Duration         `mapstructure:"OPERATION_TIMEOUT"`
+	PartitionKey        string                `mapstructure:"PARTITION_KEY"`
+	EnablePulsarLogging bool                  `mapstructure:"ENABLE_PULSAR_LOGGING"`
+	Publisher           PulsarPublisherConfig `mapstructure:"PUBLISHER"`
+}
+
+// PulsarPublisherConfig holds Pulsar publisher configurations.
+type PulsarPublisherConfig struct {
+	Name                    string        `mapstructure:"NAME"`
+	OrderingKey             string        `mapstructure:"ORDERING_KEY"`
+	BatchingMaxPublishDelay time.Duration `mapstructure:"BATCHING_MAX_PUBLISH_DELAY"`
+	BatchingMaxMessages     uint          `mapstructure:"BATCHING_MAX_MESSAGES"`
+	BatchingMaxSize         uint          `mapstructure:"BATCHING_MAX_SIZE"`
+	DisableBatching         bool          `mapstructure:"DISABLE_BATCHING"`
+	DisableBlockIfQueueFull bool          `mapstructure:"DISABLE_BLOCK_IF_QUEUE_FULL"`
+	DeliverAfter            time.Duration `mapstructure:"DELIVER_AFTER"`
+}
+
+// PulsarConnectionConfig holds Pulsar connection details.
+type PulsarConnectionConfig struct {
+	URL       string     `mapstructure:"URL"`
+	BasicAuth *BasicAuth `mapstructure:"BASIC_AUTH"`
+	AuthToken *string    `mapstructure:"AUTH_TOKEN"`
+}
+
+// BasicAuth holds basic auth credentials.
+type BasicAuth struct {
+	Username string      `mapstructure:"USERNAME"`
+	Password NonLoggable `mapstructure:"PASSWORD"`
 }
 
 // StageConfig configuration for a stage run.
