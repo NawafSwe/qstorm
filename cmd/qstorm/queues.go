@@ -36,4 +36,10 @@ var queuesMap = map[config.QueueType]func(args queueArgs) stormer{
 			printer: args.printer,
 		}
 	},
+	config.ApachePulsar: func(args queueArgs) stormer {
+		return pulsarStorm{
+			cfg:     args.cfg,
+			printer: args.printer,
+		}
+	},
 }
