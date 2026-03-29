@@ -127,7 +127,18 @@ rabbitmq: ## Start RabbitMQ
 		echo "RabbitMQ: ready (port 5672)" || \
 		echo "RabbitMQ: FAILED to start"
 
-environment: gcp-pubsub kafka rabbitmq ## Start all services and wait for readiness
+pulsar: ## Start Pulsar (standalone)
+	@docker compose up -d pulsar
+	@echo "Waiting for Pulsar..."
+	@for i in $$(seq 1 30); do \
+		curl -sf http://localhost:8080/admin/v2/brokers/health > /dev/null 2>&1 && break; \
+		sleep 1; \
+	done
+	@curl -sf http://localhost:8080/admin/v2/brokers/health > /dev/null && \
+		echo "Pulsar: ready (port 6650)" || \
+		echo "Pulsar: FAILED to start"
+
+environment: gcp-pubsub kafka rabbitmq pulsar ## Start all services and wait for readiness
 	@echo "All services ready."
 
 run: build ## Build and run with example config
@@ -136,4 +147,4 @@ run: build ## Build and run with example config
 .PHONY: help build build-docker env clean \
         lint test test-integration fmt generate \
         docker-start docker-stop docker-clean docker-restart \
-        gcp-pubsub kafka rabbitmq environment run
+        gcp-pubsub kafka rabbitmq pulsar environment run
