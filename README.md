@@ -51,7 +51,7 @@ QStorm is a **client-side tool**. It runs from your machine or CI pipeline and p
 |   <img src="img/pubsub-gcp.svg" width="16">    | Google Cloud PubSub | Supported |
 |  <img src="img/kafka-apache.svg" width="16">   | Apache Kafka | Supported |
 |    <img src="img/RabbitMQ.svg" width="16">     | RabbitMQ | Supported |
-|  <img src="img/pulsar-apache.svg" width="16">  | Apache Pulsar | Planned |
+|  <img src="img/pulsar-apache.svg" width="16">  | Apache Pulsar | Supported |
 | <img src="img/activeMQ-apache.svg" width="16"> | Apache ActiveMQ | Planned |
 
 ## Installing
@@ -101,6 +101,7 @@ make environment
 make gcp-pubsub   # PubSub emulator (port 8095)
 make kafka         # Kafka plaintext (9092) + SASL (9093)
 make rabbitmq      # RabbitMQ (port 5672)
+make pulsar        # Pulsar standalone (port 6650)
 ```
 
 ### 2. Configure connection credentials
@@ -178,12 +179,13 @@ Every queue type uses the same top-level structure:
 ```json
 {
   "QUEUE": {
-    "TYPE": "gcp-pubsub | apache-kafka | rabbitmq",
+    "TYPE": "gcp-pubsub | apache-kafka | rabbitmq | apache-pulsar",
     "PAYLOAD": "...",
     "ATTRIBUTES": "...",
     "PUBSUB": { },
     "KAFKA": { },
-    "RABBITMQ": { }
+    "RABBITMQ": { },
+    "PULSAR": { }
   },
   "STAGES": [ ]
 }
@@ -191,9 +193,9 @@ Every queue type uses the same top-level structure:
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `TYPE` | string | yes | Queue type: `gcp-pubsub`, `apache-kafka`, `rabbitmq` |
+| `TYPE` | string | yes | Queue type: `gcp-pubsub`, `apache-kafka`, `rabbitmq`, `apache-pulsar` |
 | `PAYLOAD` | string | yes | Message body. Supports [template variables](#template-variables) |
-| `ATTRIBUTES` | string | no | JSON key-value pairs attached to each message. Supports [template variables](#template-variables). Maps to PubSub attributes, Kafka headers, RabbitMQ headers |
+| `ATTRIBUTES` | string | no | JSON key-value pairs attached to each message. Supports [template variables](#template-variables). Maps to PubSub attributes, Kafka headers, RabbitMQ headers, Pulsar properties |
 
 #### STAGES
 
@@ -427,6 +429,78 @@ RABBITMQ__URL=amqps://user:pass@broker.prod:5671
 
 ---
 
+### Apache Pulsar
+
+#### Test config (JSON)
+
+```json
+{
+  "QUEUE": {
+    "TYPE": "apache-pulsar",
+    "PAYLOAD": "{\"order_id\": \"{{uuid}}\"}",
+    "ATTRIBUTES": "{\"SOURCE\": \"qstorm\"}",
+    "PULSAR": {
+      "TOPIC": "qstorm-topic",
+      "PARTITION_KEY": "customer-123",
+      "PUBLISHER": {
+        "ORDERING_KEY": "",
+        "DISABLE_BATCHING": false,
+        "BATCHING_MAX_PUBLISH_DELAY": "10ms",
+        "BATCHING_MAX_MESSAGES": 1000,
+        "BATCHING_MAX_SIZE": 131072
+      }
+    }
+  },
+  "STAGES": [
+    { "DURATION": "30s", "RATE": 50 }
+  ]
+}
+```
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `TOPIC` | string | yes | - | Pulsar topic (e.g. `persistent://public/default/my-topic` or just `my-topic` for standalone) |
+| `PARTITION_KEY` | string | no | "" | Partition routing key. Messages with the same key go to the same partition |
+
+#### Publisher config (`PULSAR.PUBLISHER`)
+
+All optional. Sensible defaults are used when omitted.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `NAME` | string | auto-generated | Producer name. Must be unique per topic if set |
+| `ORDERING_KEY` | string | "" | Overrides partition key for ordering without affecting partition routing |
+| `DISABLE_BATCHING` | bool | false | Send each message immediately (lower throughput, lower latency) |
+| `BATCHING_MAX_PUBLISH_DELAY` | duration | 1ms | Max time to wait before sending a batch |
+| `BATCHING_MAX_MESSAGES` | int | 1000 | Max messages per batch |
+| `BATCHING_MAX_SIZE` | int | 128KB | Max batch size in bytes |
+| `DISABLE_BLOCK_IF_QUEUE_FULL` | bool | false | Return error instead of blocking when send queue is full |
+| `DELIVER_AFTER` | duration | 0 | Delayed delivery. Message is visible to consumers after this delay |
+
+#### Connection config (`.env`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `PULSAR__URL` | yes | Broker address (`pulsar://host:6650` or `pulsar+ssl://host:6651` for TLS) |
+| `PULSAR__AUTH_TOKEN` | no | JWT token for authentication |
+| `PULSAR__BASIC_AUTH__USERNAME` | no | Basic auth username |
+| `PULSAR__BASIC_AUTH__PASSWORD` | no | Basic auth password (redacted in logs) |
+
+**Local (standalone, no auth):**
+```env
+PULSAR__URL=pulsar://localhost:6650
+```
+
+**Cloud (StreamNative, etc.):**
+```env
+PULSAR__URL=pulsar+ssl://broker.streamnative.cloud:6651
+PULSAR__AUTH_TOKEN=your-jwt-token
+```
+
+> See [Apache Pulsar documentation](https://pulsar.apache.org/docs) for more details.
+
+---
+
 ## Concepts
 
 ### Stages
@@ -472,12 +546,11 @@ QStorm collects metrics using [HDR Histogram](https://github.com/HdrHistogram/hd
 
 ## Roadmap
 
-- [ ] Apache Pulsar support
-- [ ] Apache ActiveMQ support
 - [ ] Consumer lag metrics (cross-queue)
 - [ ] Threshold assertions (fail if p99 > Xms or error rate > Y%)
 - [ ] Result export (JSON, CSV) for CI/CD integration
 - [ ] Custom template functions (`{{rand_int 1 100}}`, `{{rand_string 10}}`)
+- [ ] Apache ActiveMQ support (on request)
 
 ## License
 
