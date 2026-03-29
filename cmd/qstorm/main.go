@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os/signal"
+	"runtime/debug"
 	"strings"
 	"syscall"
 
@@ -12,7 +13,7 @@ import (
 	"github.com/nawafswe/qstorm/internal/printer"
 )
 
-var version = "0.1.0"
+var version = "unknown"
 
 func main() {
 	configPath := flag.String("config", "", "path to the JSON test config file")
@@ -21,7 +22,7 @@ func main() {
 	flag.Parse()
 
 	if *versionFlag {
-		fmt.Println("qstorm", version)
+		fmt.Println("qstorm", resolveVersion())
 		return
 	}
 
@@ -70,4 +71,15 @@ func availableQueues() string {
 		names = append(names, string(k))
 	}
 	return strings.Join(names, ", ")
+}
+
+func resolveVersion() string {
+	if version != "unknown" {
+		return version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" {
+		version = info.Main.Version
+		return version
+	}
+	return version
 }
