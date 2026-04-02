@@ -42,7 +42,7 @@ func (p pubSubStorm) storm(ctx context.Context) error {
 	}
 	var opts []gcp.Option
 	if pubsubCreds := p.cfg.Connection.PubSub.CredentialsFile; pubsubCreds != "" {
-		creds := pubsubCreds.String()
+		creds := string(pubsubCreds)
 		opts = append(opts, gcp.WithServiceAccountCredentials(&creds))
 	}
 	pubsubClient, err := gcp.NewClient(context.Background(), p.cfg.Connection.PubSub.ProjectID, opts...)
